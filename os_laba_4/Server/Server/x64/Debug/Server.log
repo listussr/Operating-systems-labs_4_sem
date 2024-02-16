@@ -1,0 +1,3 @@
+﻿  Server.cpp
+C:\University\kurs_2\semestr_2\systems\os_laba_4\Server\Server\Server.cpp(36,12): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+  Server.vcxproj -> C:\University\kurs_2\semestr_2\systems\os_laba_4\Server\x64\Debug\Server.exe
