@@ -1,0 +1,5 @@
+﻿  Server.cpp
+C:\University\kurs_2\semestr_2\systems\os_laba_5\Server\Server\Server.cpp(45,12): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+C:\University\kurs_2\semestr_2\systems\os_laba_5\Server\Server\Server.cpp(137,38): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+C:\University\kurs_2\semestr_2\systems\os_laba_5\Server\Server\Server.cpp(311,77): warning C4312: приведение типов: преобразование из "int" в "LPVOID" большего размера
+  Server.vcxproj -> C:\University\kurs_2\semestr_2\systems\os_laba_5\Server\x64\Debug\Server.exe
