@@ -2,25 +2,30 @@
 #include <string>
 #include <vector>
 #include<winsock2.h>
-#include<cassert>
 #pragma comment(lib, "ws2_32.lib")
-#pragma warning(disable: 4996) // для inet_addr
-using namespace std;
+#pragma warning(disable: 4996) // РґР»СЏ inet_addr
+
+#define INT_SIZE sizeof(int)
+#define ULL_SIZE sizeof(size_t)
 
 /*
-Усовершенствованная версия чата. Разработать чат для обмена сообщениями.
-Пусть на сервере есть чат, к которому могут одновременно присоединяться только 2 процесса-клиента. Остальные ждут своей очереди.
-Чат общий для всех, у каждого клиента сообщения пишутся своим цветом.
-Если клиент только подключился – ему отсылается вся текущая история и задается цвет фона консоли процесса-клиента на один из заранее предусмотренных.
+РЈСЃРѕРІРµСЂС€РµРЅСЃС‚РІРѕРІР°РЅРЅР°СЏ РІРµСЂСЃРёСЏ С‡Р°С‚Р°. Р Р°Р·СЂР°Р±РѕС‚Р°С‚СЊ С‡Р°С‚ РґР»СЏ РѕР±РјРµРЅР° СЃРѕРѕР±С‰РµРЅРёСЏРјРё.
+РџСѓСЃС‚СЊ РЅР° СЃРµСЂРІРµСЂРµ РµСЃС‚СЊ С‡Р°С‚, Рє РєРѕС‚РѕСЂРѕРјСѓ РјРѕРіСѓС‚ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ РїСЂРёСЃРѕРµРґРёРЅСЏС‚СЊСЃСЏ С‚РѕР»СЊРєРѕ 2 РїСЂРѕС†РµСЃСЃР°-РєР»РёРµРЅС‚Р°. РћСЃС‚Р°Р»СЊРЅС‹Рµ Р¶РґСѓС‚ СЃРІРѕРµР№ РѕС‡РµСЂРµРґРё.
+Р§Р°С‚ РѕР±С‰РёР№ РґР»СЏ РІСЃРµС…, Сѓ РєР°Р¶РґРѕРіРѕ РєР»РёРµРЅС‚Р° СЃРѕРѕР±С‰РµРЅРёСЏ РїРёС€СѓС‚СЃСЏ СЃРІРѕРёРј С†РІРµС‚РѕРј.
+Р•СЃР»Рё РєР»РёРµРЅС‚ С‚РѕР»СЊРєРѕ РїРѕРґРєР»СЋС‡РёР»СЃСЏ вЂ“ РµРјСѓ РѕС‚СЃС‹Р»Р°РµС‚СЃСЏ РІСЃСЏ С‚РµРєСѓС‰Р°СЏ РёСЃС‚РѕСЂРёСЏ Рё Р·Р°РґР°РµС‚СЃСЏ С†РІРµС‚ С„РѕРЅР° РєРѕРЅСЃРѕР»Рё РїСЂРѕС†РµСЃСЃР°-РєР»РёРµРЅС‚Р° РЅР° РѕРґРёРЅ РёР· Р·Р°СЂР°РЅРµРµ РїСЂРµРґСѓСЃРјРѕС‚СЂРµРЅРЅС‹С….
 */
 
-typedef pair<std::string, const char*> msg_info;
+typedef std::pair<std::string, const char*> msg_info;
 
-namespace glv {
+/// <summary>
+/// РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІРѕ РёРјС‘РЅ РґР»СЏ РєР»РёРµРЅС‚-СЃРµСЂРІРµСЂРЅРѕРіРѕ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёСЏ
+/// </summary>
+namespace glv 
+{
 	HANDLE hSemaphore;
-	vector<SOCKET> Sockets;
+	std::vector<SOCKET> Sockets;
 	const DWORD max_users = 2;
-	vector<msg_info> History;
+	std::vector<msg_info> History;
 	const char hello_message[] = { "Hi, you have been connected to the chat!" };
 	int actual_clients[2];
 	bool process_flag = true;
@@ -29,6 +34,10 @@ namespace glv {
 	int closed_client;
 }
 
+/// <summary>
+/// Р°РІР°СЂРёР№РЅРѕРµ Р·Р°РІРµСЂС€РµРЅРёРµ РїСЂРѕРіСЂР°РјРјС‹
+/// </summary>
+/// <param name="message"></param>
 void mistake(const char* message)
 {
 	std::cout << message << '\n';
@@ -40,13 +49,21 @@ void mistake(const char* message)
 	exit(1);
 }
 
+/// <summary>
+/// СЂР°РЅРґРѕРјРёР·Р°С†РёСЏ
+/// </summary>
 void randomise()
 {
 	srand(time(NULL));
 }
 
+/// <summary>
+/// С„СѓРЅРєС†РёСЏ РёР·РјРµРЅРµРЅРёСЏ РЅС‹РЅРµС€РЅРµРіРѕ РїРѕРґРєР»СЋС‡РµРЅРёСЏ РІ РјР°СЃСЃРёРІРµ РїРѕРґРєР»СЋС‡РµРЅРёР№
+/// </summary>
+/// <param name="client_number"></param>
 void update_users(int client_number)
 {
+	// P.s. РїРѕР»СЊР·РѕРІР°С‚РµР»Рё РёРґСѓС‚ РїРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ РїРѕСЂСЏРґРєРѕРІРѕРіРѕ РЅРѕРјРµСЂР° 
 	if (glv::actual_clients[0] == glv::closed_client)
 	{
 		glv::actual_clients[0] = glv::actual_clients[1];
@@ -59,19 +76,10 @@ void update_users(int client_number)
 	}
 }
 
-int get_random_integer_in_border(int min, int max, int except_int)
-{
-	int res;
-	res = min + rand() % (max - min);
-	std::cout << "Except int " << except_int << '\n';
-	std::cout << res << '\n';
-	if (res == except_int && res < max)
-		return res + 1;
-	else if(res == except_int)
-		return res - 1;
-	return res;
-}
-
+/// <summary>
+/// С„СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё С†РІРµС‚РѕРІРѕР№ С‚РµРјС‹
+/// </summary>
+/// <param name="client_number"></param>
 void send_color_theme(int client_number) 
 {
 	const char* theme = glv::themes[client_number % 8];
@@ -81,10 +89,15 @@ void send_color_theme(int client_number)
 	send(current_connection, theme, 8, NULL);
 }
 
-// функция отправки сообщения другому пользователю
+/// <summary>
+/// С„СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёСЏ РґСЂСѓРіРѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ
+/// </summary>
+/// <param name="message"></param>
+/// <param name="size_of_message"></param>
+/// <param name="client_number"></param>
 void resend_message(const char* message, int size_of_message, int client_number)
 {
-	// смотрим какому пользователю отправить сообщение
+	// СЃРјРѕС‚СЂРёРј РєР°РєРѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РѕС‚РїСЂР°РІРёС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ
 	SOCKET current_connection = glv::Sockets[glv::actual_clients[(glv::actual_clients[0] != client_number)? 0: 1]];
 	std::cout << "-------------------" << '\n';
 	std::cout << "current client to be received a message #" << client_number << " | with connection " << current_connection << '\n';
@@ -93,101 +106,119 @@ void resend_message(const char* message, int size_of_message, int client_number)
 		std::cout << "Users[" << i << "]: " << glv::actual_clients[i] << '\n';
 		std::cout << "Connections[" << i << "]: " << glv::Sockets[glv::actual_clients[i]] << '\n';
 	}
-	// отправляем размер сообщения и само сообщение
-	send(current_connection, (char*)&client_number, sizeof(int), NULL);
+	// РѕС‚РїСЂР°РІР»СЏРµРј СЂР°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ Рё СЃР°РјРѕ СЃРѕРѕР±С‰РµРЅРёРµ
+	send(current_connection, (char*)&client_number, INT_SIZE, NULL);
 	//std::cout << "Client number" << "<" << client_number << ">" << '\n';
-	send(current_connection, (char*)&size_of_message, sizeof(int), NULL);
+	send(current_connection, (char*)&size_of_message, INT_SIZE, NULL);
 	//std::cout << "Size of message" << "<" << size_of_message << ">" << '\n';
 	send(current_connection, message, size_of_message, NULL);
 	//std::cout << "<Message>: " << message << '\n';
 	std::cout << "-------------------" << '\n';
 }
 
-// функция обработки сообщения
+/// <summary>
+/// С„СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё СЃРѕРѕР±С‰РµРЅРёСЏ
+/// </summary>
+/// <param name="message"></param>
+/// <param name="message_length"></param>
+/// <param name="client_number"></param>
+/// <param name="connection_flag"></param>
 void message_handler(const char* message, int message_length, int client_number, bool& connection_flag)
 {
-	// проверяем на соответствие команде о выходе
+	// РїСЂРѕРІРµСЂСЏРµРј РЅР° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ РєРѕРјР°РЅРґРµ Рѕ РІС‹С…РѕРґРµ
 	if (!strcmp(message, "--leave"))
 	{
 		connection_flag = false;
 	}
 	//std::cout << "<Message>: " << message << '\n';
-	// записываем сообщение в историю
+	// Р·Р°РїРёСЃС‹РІР°РµРј СЃРѕРѕР±С‰РµРЅРёРµ РІ РёСЃС‚РѕСЂРёСЋ
 	std::string name = "User #";
 	name += std::to_string(client_number);
 	std::cout << name << '\t' << message << '\n';
 	msg_info msg(name, message);
 	glv::History.push_back(msg);
-	// отправляем сообщение другому пользователю
+	// РѕС‚РїСЂР°РІР»СЏРµРј СЃРѕРѕР±С‰РµРЅРёРµ РґСЂСѓРіРѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ
 	resend_message(message, message_length, client_number);
 }
 
-// функция отправки истории чата новоподключившемуся пользователю
+/// <summary>
+/// Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё РЅРѕРІРѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РёСЃС‚РѕСЂРёРё СЃРѕРѕР±С‰РµРЅРёР№
+/// </summary>
+/// <param name="client_number"></param>
 void send_history(int client_number)
 {
-	// выбираем какому из 2 активных пользователей отправить сообщение
+	// РІС‹Р±РёСЂР°РµРј РєР°РєРѕРјСѓ РёР· 2 Р°РєС‚РёРІРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РѕС‚РїСЂР°РІРёС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ
 	SOCKET current_connection = glv::Sockets[glv::actual_clients[(glv::actual_clients[0] != client_number) ?  1: 0]];
-	// отправляем кол-во сообщений из истории
+	// РѕС‚РїСЂР°РІР»СЏРµРј РєРѕР»-РІРѕ СЃРѕРѕР±С‰РµРЅРёР№ РёР· РёСЃС‚РѕСЂРёРё
 	size_t history_size = glv::History.size();
-	send(current_connection, (char*)&history_size, sizeof(size_t), NULL);
+	send(current_connection, (char*)&history_size, ULL_SIZE, NULL);
 	for (msg_info msg : glv::History)
 	{
-		// отправляем все сообщения из истории
+		// РѕС‚РїСЂР°РІР»СЏРµРј РІСЃРµ СЃРѕРѕР±С‰РµРЅРёСЏ РёР· РёСЃС‚РѕСЂРёРё
 		int size_of_message = sizeof(msg.second);
 		int size_of_name = msg.first.size();
-		send(current_connection, (char*)&size_of_name, sizeof(int), NULL);
+		send(current_connection, (char*)&size_of_name, INT_SIZE, NULL);
 		send(current_connection, msg.first.c_str(), size_of_name, NULL);
-		send(current_connection, (char*)&size_of_message, sizeof(int), NULL);
+		send(current_connection, (char*)&size_of_message, INT_SIZE, NULL);
 		send(current_connection, msg.second, sizeof(msg.second), NULL);
 	}
 }
 
-void client_HANDLER(int i)
+/// <summary>
+/// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё РѕРґРЅРѕРіРѕ РїСЂРѕС†РµСЃСЃР° РєР»РёРµРЅС‚Р°
+/// </summary>
+/// <param name="number"></param>
+void client_HANDLER(int number)
 {
-	int client_number = i - 1;
+	int client_number = number - 1;
 	std::cout << "Client " << client_number << " connected" << '\n';
 	int size_of_msg;
 	char* message;
 	DWORD dwResult = 1;
 	bool connection_flag = true;
-	// ожидаем подключения
+	// РѕР¶РёРґР°РµРј РїРѕРґРєР»СЋС‡РµРЅРёСЏ
 	while (dwResult != WAIT_OBJECT_0)
 	{
 		dwResult = WaitForSingleObject(glv::hSemaphore, 1);
 		Sleep(300);
 	}
 	send_color_theme(client_number);
-	// отсылаем приветствие
+	// РѕС‚СЃС‹Р»Р°РµРј РїСЂРёРІРµС‚СЃС‚РІРёРµ
 	send(glv::Sockets[client_number], glv::hello_message, sizeof(glv::hello_message), NULL);
-	// отсылаем историю чата
+	// РѕС‚СЃС‹Р»Р°РµРј РёСЃС‚РѕСЂРёСЋ С‡Р°С‚Р°
 	send_history(client_number);
-	// пока клиент не вышел
+	// РїРѕРєР° РєР»РёРµРЅС‚ РЅРµ РІС‹С€РµР»
 	while (connection_flag) {
-		// получаем размер сообщения
-		if (recv(glv::Sockets[client_number], (char*)&size_of_msg, sizeof(int), NULL) < 0)
+		// РїРѕР»СѓС‡Р°РµРј СЂР°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ
+		if (recv(glv::Sockets[client_number], (char*)&size_of_msg, INT_SIZE, NULL) < 0)
 		{
 			ReleaseSemaphore(glv::hSemaphore, 1, NULL);
 			mistake("Failure in recieving message");
 		}
 		message = new char[size_of_msg + 1];
 		message[size_of_msg] = '\0';
-		// получаем сообщение
+		// РїРѕР»СѓС‡Р°РµРј СЃРѕРѕР±С‰РµРЅРёРµ
 		if (recv(glv::Sockets[client_number], message, size_of_msg, NULL) < 0) 
 		{
 			ReleaseSemaphore(glv::hSemaphore, 1, NULL);
 			mistake("Failure in recieving message!");
 		}
-		// обрабатываем сообщение
+		// РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј СЃРѕРѕР±С‰РµРЅРёРµ
 		message_handler(message, size_of_msg, client_number, connection_flag);
 	}
+	// СЃРЅРёРјР°РµРј С„Р»Р°Рі Р·Р°РіСЂСѓР·РєРё СЃРµСЂРІРµСЂР° РїСЂРё РІС‹С…РѕРґРµ РєР»РёРµРЅС‚Р°
 	glv::server_loaded = false;
+	// Р·Р°РїРёСЃС‹РІР°РµРј РєР°РєРѕР№ РєР»РёРµРЅС‚ РІС‹С€РµР»
 	glv::closed_client = client_number;
+	// РїРµСЂРµРєР»СЋС‡Р°РµРј СЃРµРјР°С„РѕСЂ
 	ReleaseSemaphore(glv::hSemaphore, 1, NULL);
 	std::cout << "User " << client_number << " has disconnected" << '\n';
 
 }
 
-// функция инииализации библиотеки
+/// <summary>
+/// Р¤СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РІРµСЂСЃРёРё Р±РёР±Р»РёРѕС‚РµРєРё
+/// </summary>
 void initialise_WSA()
 {
 	WSAData wsaData;
@@ -199,6 +230,10 @@ void initialise_WSA()
 	}
 }
 
+/// <summary>
+/// Р¤СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё СЃРµРјР°С„РѕСЂР°
+/// </summary>
+/// <returns></returns>
 HANDLE initialise_semaphore()
 {
 	HANDLE semaphore =	CreateSemaphore(NULL, 2, 2, L"semaphore");
@@ -209,61 +244,6 @@ HANDLE initialise_semaphore()
 	}
 	return semaphore;
 }
-
-/*
-bool is_in_border(int left_border, int right_border, int value) {
-	return left_border <= value <= right_border;
-}
-
-int get_integer() {
-	int left_val{ 3 }, right_val{ 10 };
-	std::string str_val;
-	int value;
-	bool incorrect = true;
-	std::cout << "Enter amount of clients in the chat (3 <= value <= 10): ";
-	while (incorrect) {
-		std::cin >> str_val;
-		try {
-			if(is_in_border(left_val, right_val, value = std::stoi(str_val)))
-				incorrect = false;
-			else {
-				throw std::invalid_argument("");
-			}
-		}
-		catch (std::invalid_argument) {
-			std::cout << "Incorrect input or value out of the border! Retry input: ";
-		}
-	}
-	std::cout << '\n';
-	return value;
-}
-
-void create_client_processes(int amount_of_processes) {
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&si, si.cb);
-	si.cb = sizeof(si);
-	ZeroMemory(&pi, sizeof(pi));
-	for (int i = 0; i < amount_of_processes; ++i) {
-		if (!CreateProcess(
-			L"C:\\University\\kurs_2\\semestr_2\\systems\\os_laba_5\\Client\\x64\Debug\\Client.exe",
-			NULL,
-			NULL,
-			NULL,
-			FALSE,
-			CREATE_NEW_CONSOLE,
-			NULL,
-			NULL,
-			&si,
-			&pi)
-			) {
-			std::cout << "Failure in creating process!" << '\n';
-			exit(1);
-		}
-		Sleep(1 * 1000);
-	}
-}
-*/
 
 int main(int argc, char* argv[])
 {
@@ -282,10 +262,12 @@ int main(int argc, char* argv[])
 
 	int i = 0;
 	glv::hSemaphore = CreateSemaphore(NULL, glv::max_users, glv::max_users, NULL);
+	// РїРѕРєР° СЃС‚РѕРёС‚ С„Р»Р°Рі СЂР°Р±РѕС‚С‹, РїРѕРґРґРµСЂР¶РёРІР°РµРј СЂР°Р±РѕС‚Сѓ СЃРµСЂРІРµСЂР°
 	while (glv::process_flag)
 	{
 		if (!glv::process_flag)
 			break;
+		// Р·Р°РїРёСЃС‹РІР°РµРј РІ РІРµСЃС‚РѕСЂ СЃРѕРєРµС‚РѕРІ РЅРѕРІС‹Рµ РїРѕРґРєР»СЋС‡РµРЅРёСЏ
 		glv::Sockets.push_back(accept(sListen, (SOCKADDR*)&addr, &sizeofaddr));
 		std::cout << "####" << '\n';
 		std::cout << "Socket.tail: " << glv::Sockets[glv::Sockets.size() - 1] << '\n';
@@ -293,10 +275,12 @@ int main(int argc, char* argv[])
 		
 		if (i < 2)
 		{
+			// РІРЅРѕСЃРёРј РІ РјР°СЃСЃРёРІ 
 			glv::actual_clients[i] = i;
 		}
 		else
 		{
+			// РїРµСЂРµР·Р°РїРёСЃС‹РІР°РµРј РїРѕРґРєР»СЋС‡РµРЅРёСЏ РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ С‚РѕРіРѕ РєС‚Рѕ РїРѕРґРєР»СЋС‡РёР»СЃСЏ Рё РєС‚Рѕ РѕС‚РєР»СЋС‡РёР»СЃСЏ
 			update_users(i);
 			std::cout << "####" << '\n';
 			std::cout << "glv::actual_clients[0]: " << glv::actual_clients[0] << " | with socket: " << glv::Sockets[glv::actual_clients[0]] << '\n';
@@ -306,20 +290,24 @@ int main(int argc, char* argv[])
 		++i;
 		if (i > 1)
 		{
+			// РµСЃР»Рё РЅР° СЃРµСЂРІРµСЂРµ Р±РѕР»СЊС€Рµ 2 С‡РµР»РѕРІРµРє, С‚Рѕ СЃС‚Р°РІРёРј С„Р»Р°Рі РїСЂРёРѕСЃС‚Р°РЅРѕРІРєРё РѕР±СЂР°Р±РѕС‚РєРё РЅРѕРІС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
 			glv::server_loaded = true;
 		}
 		CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)client_HANDLER, (LPVOID)i, NULL, NULL);
 		while (glv::server_loaded)
 		{
+			// РїРѕРєР° СЃС‚РѕРё С„Р»Р°Рі РѕР¶РёРґР°РµРј
 			Sleep(1 * 1000);
 		}
 		Sleep(30);
 	}
 	std::cout << "Server has been closed" << '\n';
+	// Р·Р°РєСЂС‹РІР°РµРј СЃРѕРєРµС‚С‹
 	for (int i = 0; i < glv::Sockets.size(); ++i)
 	{
 		closesocket(glv::Sockets[i]);
 	}
+	// Р·Р°РєСЂС‹РІР°РµРј СЃРµРјР°С„РѕСЂ
 	CloseHandle(hSemaphore);
 	WSACleanup();
 	system("pause");
