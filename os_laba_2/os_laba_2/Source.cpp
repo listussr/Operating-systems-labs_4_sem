@@ -8,13 +8,13 @@
 #include<regex>
 
 #ifdef __linux__ 
-#define slash char{47}
-#define slash_str "/"
-#include <unistd.h>
-#include <sys/stat.h>
+    #define slash char{47}
+    #define slash_str "/"
+    #include <unistd.h>
+    #include <sys/stat.h>
 #elif _WIN32
-#define slash char{92}
-#define slash_str "\\"
+    #define slash char{92}
+    #define slash_str "\\"
 #endif
 
 using std::cin;
@@ -22,130 +22,168 @@ using std::ifstream;
 using std::ofstream;
 using std::cout;
 /*
-Программа должна корректно обрабатывать ключи и аргумен-
-ты в случае ввода из командной строки, либо программа должна
+РџСЂРѕРіСЂР°РјРјР° РґРѕР»Р¶РЅР° РєРѕСЂСЂРµРєС‚РЅРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°С‚СЊ РєР»СЋС‡Рё Рё Р°СЂРіСѓРјРµРЅ-
+С‚С‹ РІ СЃР»СѓС‡Р°Рµ РІРІРѕРґР° РёР· РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё, Р»РёР±Рѕ РїСЂРѕРіСЂР°РјРјР° РґРѕР»Р¶РЅР°
 
-показывать список действий в случае ввода из консоли ввода.
-Программа должна иметь возможность осуществлять:
-- копирование файлов,
-- перемещение файлов,
-- получение информации о файле (права, размер, время изменения),
-- изменение прав на выбранный файл.
+РїРѕРєР°Р·С‹РІР°С‚СЊ СЃРїРёСЃРѕРє РґРµР№СЃС‚РІРёР№ РІ СЃР»СѓС‡Р°Рµ РІРІРѕРґР° РёР· РєРѕРЅСЃРѕР»Рё РІРІРѕРґР°.
+РџСЂРѕРіСЂР°РјРјР° РґРѕР»Р¶РЅР° РёРјРµС‚СЊ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ РѕСЃСѓС‰РµСЃС‚РІР»СЏС‚СЊ:
+- РєРѕРїРёСЂРѕРІР°РЅРёРµ С„Р°Р№Р»РѕРІ,
+- РїРµСЂРµРјРµС‰РµРЅРёРµ С„Р°Р№Р»РѕРІ,
+- РїРѕР»СѓС‡РµРЅРёРµ РёРЅС„РѕСЂРјР°С†РёРё Рѕ С„Р°Р№Р»Рµ (РїСЂР°РІР°, СЂР°Р·РјРµСЂ, РІСЂРµРјСЏ РёР·РјРµРЅРµРЅРёСЏ),
+- РёР·РјРµРЅРµРЅРёРµ РїСЂР°РІ РЅР° РІС‹Р±СЂР°РЅРЅС‹Р№ С„Р°Р№Р».
 
-Просто вызвать функцию для копирования файла нельзя.
-Также программа должна иметь help для работы с ней, он должен
-вызываться при запуске программы с ключом --help.
+РџСЂРѕСЃС‚Рѕ РІС‹Р·РІР°С‚СЊ С„СѓРЅРєС†РёСЋ РґР»СЏ РєРѕРїРёСЂРѕРІР°РЅРёСЏ С„Р°Р№Р»Р° РЅРµР»СЊР·СЏ.
+РўР°РєР¶Рµ РїСЂРѕРіСЂР°РјРјР° РґРѕР»Р¶РЅР° РёРјРµС‚СЊ help РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ РЅРµР№, РѕРЅ РґРѕР»Р¶РµРЅ
+РІС‹Р·С‹РІР°С‚СЊСЃСЏ РїСЂРё Р·Р°РїСѓСЃРєРµ РїСЂРѕРіСЂР°РјРјС‹ СЃ РєР»СЋС‡РѕРј --help.
 */
 
-void show_help_message() {
-    cout << "Options:" << '\n';
-    cout << "Enter --copy [FILENAME] [NEWFILENAME] to copy first file into second file" << '\n';
-    cout << "Enter --move [FILENAME] [DIRNAME] to move file into the marked directory" << '\n';
-    cout << "Enter --info [FILENAME] to get information about the marked file" << '\n';
-    cout << "Enter --chmod [FILENAME] [MODE] to change mode of the marked file" << '\n';
-    cout << "[MODE] = [*** where * equals a number 0-7] | [rwxrwxrwx]" << '\n';
-}
-
-void mistake(const char* message) {
+/// @brief function of logging mistakes
+/// @param message 
+void mistake(const char* message) 
+{
     cout << "<" << message << ">" << '\n';
     cout << "[Enter --help to see possible commands]" << '\n';
 }
 
-int copy_file(const char* filename, const char* newfilename) {
-    //проверка на копирование файла в себя
-    if (!strcmp(filename, newfilename)) {
+/// @brief function of copying file
+/// @param filename 
+/// @param newfilename 
+/// @return program code -> int
+int copy_file(const char* filename, const char* newfilename) 
+{
+    //РїСЂРѕРІРµСЂРєР° РЅР° РєРѕРїРёСЂРѕРІР°РЅРёРµ С„Р°Р№Р»Р° РІ СЃРµР±СЏ
+    if (!strcmp(filename, newfilename)) 
+    {
         mistake("File can't be copied inside itself!");
-        return 2; // код ошибки 2 - названия файлов совпадают
+        return 2; // РєРѕРґ РѕС€РёР±РєРё 2 - РЅР°Р·РІР°РЅРёСЏ С„Р°Р№Р»РѕРІ СЃРѕРІРїР°РґР°СЋС‚
     }
-    // код ошибки
-    int code{ 0 }; // 0 - всё в порядке
+    // РєРѕРґ РѕС€РёР±РєРё
+    int code{ 0 }; // 0 - РІСЃС‘ РІ РїРѕСЂСЏРґРєРµ
     ifstream in;
     ofstream out;
     in.open(filename, std::ios::binary);
-    if (in.is_open()) {
+    if (in.is_open()) 
+    {
         const int buffer_size = 4;
         char* buffer = new char[buffer_size];
         out.open(newfilename, std::ios::binary);
-        // копируем один файл в другой
-        while (!in.eof()) {
+        // copying files
+        while (!in.eof()) 
+        {
             in.read(buffer, buffer_size);
+            // writing to destination from buffer if buffer contains something
             if (in.gcount())
+            {
                 out.write(buffer, in.gcount());
+            }
         }
         cout << "{File has been copied succesfully!}" << '\n';
         code = 0;
+        // cleaning memory and closing file
         out.close();
         delete[] buffer;
     }
-    else {
-        //отправляем сообщение об ошибке
+    else 
+    {
+        //РѕС‚РїСЂР°РІР»СЏРµРј СЃРѕРѕР±С‰РµРЅРёРµ РѕР± РѕС€РёР±РєРµ
         mistake("Source file doesn't exist!");
-        code = 1; // код ошибки 1 - файла с названием <filename> не существует
+        code = 1; // РєРѕРґ РѕС€РёР±РєРё 1 - С„Р°Р№Р»Р° СЃ РЅР°Р·РІР°РЅРёРµРј <filename> РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚
     }
     in.close();
     return code;
 }
 
-int move_file(const char* filename, const char* dirname) {
-    //проверка на существование файла
+/// @brief function of moving file to another directory
+/// @param filename 
+/// @param dirname 
+/// @return program code -> int
+int move_file(const char* filename, const char* dirname) 
+{
+    //РїСЂРѕРІРµСЂРєР° РЅР° СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёРµ С„Р°Р№Р»Р°
     ifstream in;
     in.open(filename, std::ios::binary);
-    if (!in.is_open()) {
+    if (!in.is_open()) 
+    {
         mistake("Incorrect filename!");
-        return 1; // флаг ошибки 1 - файла не существует
+        return 1; // С„Р»Р°Рі РѕС€РёР±РєРё 1 - С„Р°Р№Р»Р° РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚
     }
     in.close();
-    // выбираем только название файла без пути к нему
+    // РІС‹Р±РёСЂР°РµРј С‚РѕР»СЊРєРѕ РЅР°Р·РІР°РЅРёРµ С„Р°Р№Р»Р° Р±РµР· РїСѓС‚Рё Рє РЅРµРјСѓ
     bool slash_flag = 1;
     int ptr = strlen(filename) - 1;
-    for (; ptr > 0 && slash_flag; --ptr) {
+    for (; ptr > 0 && slash_flag; --ptr) 
+    {
         if (filename[ptr] == slash)
             slash_flag = 0;
     }
     char* file = new char[strlen(filename) - ptr];
     strcpy(file, filename + ptr);
-    // создаём массив под новое название
+    // СЃРѕР·РґР°С‘Рј РјР°СЃСЃРёРІ РїРѕРґ РЅРѕРІРѕРµ РЅР°Р·РІР°РЅРёРµ
     char* newfilename = new char[strlen(dirname) + strlen(filename)];
-    // конкатенации newfilename и строки
+    // РєРѕРЅРєР°С‚РµРЅР°С†РёРё newfilename Рё СЃС‚СЂРѕРєРё
     strcpy(newfilename, dirname);
     strcpy(newfilename + strlen(dirname), slash_str);
     strcpy(newfilename + strlen(dirname) + 1, file);
     strcpy(newfilename + strlen(dirname) + 1 + strlen(file), "\0");
     cout << "{File has been moved succefully!}" << '\n';
-    // переименовываем файл <=> переносим в новую директорию
+    // РїРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј С„Р°Р№Р» <=> РїРµСЂРµРЅРѕСЃРёРј РІ РЅРѕРІСѓСЋ РґРёСЂРµРєС‚РѕСЂРёСЋ
     return rename(filename, newfilename);
 }
 
-const char* file_type(struct stat statbuffer) {
+/// @brief function of getting file type
+/// @param statbuffer 
+/// @return file_type -> char*
+const char* file_type(struct stat statbuffer)
+{
     char* type;
-    if (S_ISREG(statbuffer.st_mode)) {
+    if (S_ISREG(statbuffer.st_mode)) 
+    {
+        type = new char[8];
         strcpy(type, "regular");
     }
-    else if (S_ISDIR(statbuffer.st_mode)) {
+    else if (S_ISDIR(statbuffer.st_mode)) 
+    {
+        type = new char[10];
         strcpy(type, "directory");
     }
-    else if (S_ISBLK(statbuffer.st_mode)) {
+    else if (S_ISBLK(statbuffer.st_mode)) 
+    {
+        type = new char[14];
         strcpy(type, "block special");
     }
-    else if (S_ISFIFO(statbuffer.st_mode)) {
+    else if (S_ISFIFO(statbuffer.st_mode)) 
+    {
+        type = new char[13];
         strcpy(type, "pipe or FIFO");
     }
-    else if (S_ISLNK(statbuffer.st_mode)) {
+    else if (S_ISLNK(statbuffer.st_mode)) 
+    {
+        type = new char[14];
         strcpy(type, "symbolic link");
     }
-    else if (S_ISCHR(statbuffer.st_mode)) {
+    else if (S_ISCHR(statbuffer.st_mode))
+    {
+        type = new char[18];
         strcpy(type, "character special");
     }
-    else if (S_ISSOCK(statbuffer.st_mode)) {
+    else if (S_ISSOCK(statbuffer.st_mode)) 
+    {
+        type = new char[7];
         strcpy(type, "socket");
     }
-    else {
+    else 
+    {
+        type = new char[13];
         strcpy(type, "unknown type");
     }
-    return type;
+    return;
 }
 
-const char* file_mode(struct stat statbuffer) {
+/// @brief function that reads file mode 
+/// @param statbuffer 
+/// @return mode -> char[9]
+const char* file_mode(struct stat statbuffer)
+{
     char* mode = new char[9];
     mode[0] = (statbuffer.st_mode & S_IRUSR) ? 'r' : '-';
     mode[1] = (statbuffer.st_mode & S_IWUSR) ? 'w' : '-';
@@ -159,15 +197,21 @@ const char* file_mode(struct stat statbuffer) {
     return mode;
 }
 
-int info_file(const char* filename) {
+/// @brief function of getting information about the file
+/// @param filename 
+/// @return flag -> int
+int info_file(const char* filename) 
+{
     // stat from library
     struct stat statbuffer;
-    if (lstat(filename, &statbuffer)) {
+    if (lstat(filename, &statbuffer)) 
+    {
         mistake("Incorrect filename");
         return 1;
     }
-    //const char* type = file_type(statbuffer);
+    const char* type = file_type(statbuffer);
     const char* mode = file_mode(statbuffer);
+    // formed output
     cout << "Name:" << std::setw(30) << std::right << filename << '\n';
     cout << "Size:" << std::setw(23) << std::right << statbuffer.st_size << " bytes" << '\n';
     cout << "User ID of owner:" << std::setw(14) << std::right << statbuffer.st_uid << '\n';
@@ -176,85 +220,100 @@ int info_file(const char* filename) {
     cout << "Last modification:" << std::setw(34) << std::right << ctime(&statbuffer.st_mtime);
     cout << "Last access:" << std::setw(40) << std::right << ctime(&statbuffer.st_atime);
     cout << "Last state change:" << std::setw(34) << std::right << ctime(&statbuffer.st_ctime);
-    //cout << "Type:" << '\t' << type << '\n';
+    cout << "Type:" << '\t' << type << '\n';
     cout << "Mode:" << std::setw(31) << std::right << mode << '\n';
-    //delete[] type;
+    // cleaning memory
+    delete[] type;
     delete[] mode;
     return 0;
 }
 
-int get_code(std::string mask) {
-    int ans = 0;
-    int x = 256;
-    for (int i = 0; i < mask.length(); ++i) {
-        if (mask[i] != '-') {
-            ans += x;
+/// @brief function of counting the mode of the file
+/// @param mask 
+/// @return code -> int
+int get_code(std::string mask) 
+{
+        int ans = 0;
+        int x = 256;
+        for (int i = 0; i < mask.length(); ++i) 
+        {
+            if (mask[i] != '-') 
+            {
+                    ans += x;
+            }
+            x /= 2;
         }
-        x /= 2;
-    }
-    return ans;
+        return ans;
 }
 
-void change_mode(char* name, char* mode) {
-    ifstream in;
-    in.open(name, std::ios::binary);
-    /*if (!in.is_open()) {
-            mistake("File with such name doesn't exist!");
-    }*/
-    //else {
+/// @brief function of changing mode of the file
+/// @param name 
+/// @param mode 
+void change_mode(char* name, char* mode)
+{
     const std::regex reg3("([0-7])([0-7])([0-7])");
     const std::regex reg9("(r|-)(w|-)(x|-)(r|-)(w|-)(x|-)(r|-)(w|-)(x|-)");
-    if (std::regex_match(mode, reg3)) {
-        std::string samples[] = { "---","--x","-w-","-wx","r--","r-x" };
-        /*int mask = std::stoi(mode);
-                    std::string ans;
-                    while (mask != 0) {
-                            ans = samples[mask % 10] + ans;
-                            mask /= 10;
-                    }
-                    int code = get_code(ans);
-                    chmod(name, code);
-                    cout << "Successfully!\n";
-                    */
-                    /*std::string answer;
-                    for(int i = 0; i < 3; ++i){
-                    answer += samples[static_cast<int>(mode[i]) - 48];
-                    }*/
-        int code = get_code(ans);
+    if (std::regex_match(mode, reg3)) 
+    {
+        std::string samples[] = {"---","--x","-w-","-wx","r--","r-x"};
+        std::string answer;
+        for(int i = 0; i < 3; ++i)
+        {
+            answer += samples[static_cast<int>(mode[i]) - 48];
+        }
+        int code = get_code(answer);
         chmod(name, code);
         cout << "{Mode has been changed succesfully!\n}";
     }
-    else if (regex_match(mode, reg9)) {
+    else if (regex_match(mode, reg9))
+    {
         int code = get_code(mode);
         chmod(name, code);
         cout << "{Mode has been changed succesfully!\n}";
     }
-    else {
+    else 
+    {
         mistake("Incorrect format of the input!");
     }
-    //}
-    in.close();
 }
 
-int main(int argc, char* argw[]) {
-    if (argc == 2 && !strcmp(argw[1], "--help")) {
-        show_help_message();
+int main(int argc, char* argw[]) 
+{
+    // choosing a mod of working
+    if(argc == 2 && !strcmp(argw[1], "--help"))
+    {
+        cout << "Options:" << '\n';
+        cout << "Enter --copy [FILENAME] [NEWFILENAME] to copy first file into second file" << '\n';
+        cout << "Enter --move [FILENAME] [DIRNAME] to move file into the marked directory" << '\n';
+        cout << "Enter --info [FILENAME] to get information about the marked file" << '\n';
+        cout << "Enter --chmod [FILENAME] [MODE] to change mode of the marked file" << '\n';
+        cout << "[MODE] = [*** where * equals a number 0-7] | [rwxrwxrwx]" << '\n';
     }
-    else if (argc == 3 && !strcmp(argw[1], "--info")) {
+    else if(argc == 3 && !strcmp(argw[1], "--info"))
+    {
         info_file(argw[2]);
     }
-    else if (argc == 4) {
-        if (!strcmp(argw[1], "--move"))
+    else if(argc == 4)
+    {
+        if(!strcmp(argw[1], "--move"))
+        {
             move_file(argw[2], argw[3]);
-        else if (!strcmp(argw[1], "--copy"))
+        }
+        else if(!strcmp(argw[1], "--copy"))
+        {
             copy_file(argw[2], argw[3]);
-        else if (!strcmp(argw[1], "--chmod"))
+        }
+        else if(!strcmp(argw[1], "--chmod"))
+        {
             change_mode(argw[2], argw[3]);
-        else {
+        }
+        else
+        {
             mistake("Incorrect command!");
         }
     }
-    else {
+    else 
+    {
         mistake("Incorrect command!");
     }
     return 0;
