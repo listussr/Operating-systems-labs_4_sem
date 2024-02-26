@@ -6,38 +6,71 @@
 #pragma warning(disable:4996)
 
 /*
-¬‡Ë‡ÌÚ 23-24. (24 ‚‡Ë‡ÌÚ Ò ÔÓÏÓ˘¸˛ ÒÓÍÂÚÓ‚)
-— ÔÓˆÂÒÒ‡-ÒÂ‚Â‡ Á‡ÔÛÒÍ‡ÂÚÒˇ n ÔÓˆÂÒÒÓ‚ ÍÎËÂÌÚÓ‚. ƒÎˇ Í‡Ê‰Ó„Ó ËÁ ÒÓÁ‰‡ÌÌ˚ı ÍÎËÂÌÚÓ‚ ÛÍ‡Á˚‚‡ÂÚÒˇ ‚ÂÏˇ ÊËÁÌË (‚ ÒÂÍÛÌ‰‡ı).
- ÎËÂÌÚ Á‡ÔÛÒÍ‡ÂÚÒˇ, ÒÛ˘ÂÒÚ‚ÛÂÚ Á‡‰‡ÌÌÓÂ ‚ÂÏˇ Ë Á‡‚Â¯‡ÂÚ ‡·ÓÚÛ. “‡ÍÊÂ ÒÎÂ‰ÛÂÚ ÔÂ‰ÛÒÏÓÚÂÚ¸ ÁÌ‡˜ÂÌËÂ ‰Îˇ ·ÂÒÍÓÌÂ˜ÌÓ„Ó ‚ÂÏÂÌË.
-“Â·ÛÂÚÒˇ ÌÂ ÏÂÌÂÂ ÚÂı Ó‰ÌÓ‚ÂÏÂÌÌÓ Á‡ÔÛÒÍ‡ÂÏ˚ı ÔÓˆÂÒÒÓ‚-ÍÎËÂÌÚÓ‚.
+–í–∞—Ä–∏–∞–Ω—Ç 23-24. (24 –≤–∞—Ä–∏–∞–Ω—Ç —Å –ø–æ–º–æ—â—å—é —Å–æ–∫–µ—Ç–æ–≤)
+–° –ø—Ä–æ—Ü–µ—Å—Å–∞-—Å–µ—Ä–≤–µ—Ä–∞ –∑–∞–ø—É—Å–∫–∞–µ—Ç—Å—è n –ø—Ä–æ—Ü–µ—Å—Å–æ–≤ –∫–ª–∏–µ–Ω—Ç–æ–≤. –î–ª—è –∫–∞–∂–¥–æ–≥–æ –∏–∑ —Å–æ–∑–¥–∞–Ω–Ω—ã—Ö –∫–ª–∏–µ–Ω—Ç–æ–≤ —É–∫–∞–∑—ã–≤–∞–µ—Ç—Å—è –≤—Ä–µ–º—è –∂–∏–∑–Ω–∏ (–≤ —Å–µ–∫—É–Ω–¥–∞—Ö).
+–ö–ª–∏–µ–Ω—Ç –∑–∞–ø—É—Å–∫–∞–µ—Ç—Å—è, —Å—É—â–µ—Å—Ç–≤—É–µ—Ç –∑–∞–¥–∞–Ω–Ω–æ–µ –≤—Ä–µ–º—è –∏ –∑–∞–≤–µ—Ä—à–∞–µ—Ç —Ä–∞–±–æ—Ç—É. –¢–∞–∫–∂–µ —Å–ª–µ–¥—É–µ—Ç –ø—Ä–µ–¥—É—Å–º–æ—Ç—Ä–µ—Ç—å –∑–Ω–∞—á–µ–Ω–∏–µ –¥–ª—è –±–µ—Å–∫–æ–Ω–µ—á–Ω–æ–≥–æ –≤—Ä–µ–º–µ–Ω–∏.
+–¢—Ä–µ–±—É–µ—Ç—Å—è –Ω–µ –º–µ–Ω–µ–µ —Ç—Ä–µ—Ö –æ–¥–Ω–æ–≤—Ä–µ–º–µ–Ω–Ω–æ –∑–∞–ø—É—Å–∫–∞–µ–º—ã—Ö –ø—Ä–æ—Ü–µ—Å—Å–æ–≤-–∫–ª–∏–µ–Ω—Ç–æ–≤.
 */
 
-void client_life(int lifetime) {
-	// ‚˚‚Ó‰ËÏ ‚ÂÏˇ ‚ ÍÓÌÒÓÎ¸ Ë ÒÚ‡‚ËÏ ‚ÂÏˇ ÊËÁÌË ÔÓ„‡ÏÏ˚
-	if (lifetime > 0) {
+#define SECOND 1000
+
+/// <summary>
+/// –≤—ã–≤–æ–¥ –≤—Ä–µ–º–µ–Ω–∏ –∂–∏–∑–Ω–∏ —Å –æ–±—Ä–∞—Ç–Ω—ã–º –æ—Ç—Å—á—ë—Ç–æ–º
+/// </summary>
+/// <param name="lifetime"></param>
+void custom_output(int lifetime)
+{
+	for (int i = 0; i < lifetime; ++i)
+	{
 		std::cout << "Lifetime: " << lifetime << " seconds" << '\n';
-		Sleep((DWORD)lifetime * 1000);
+		std::cout << "Remaining time: " << lifetime - i << " seconds" << '\n';
+		Sleep(1 * SECOND);
+		system("cls");
 	}
-	else {
-		std::cout << "Lifetime: " << "eternity" << '\n';
-		Sleep((DWORD)(pow(2, sizeof(DWORD) * 8) - 1) * 1000);
-	}
-	std::cout << "Time is up! You are going to be disconected in 10 seconds!" << '\n';
-	Sleep(10 * 1000);
 }
 
-int get_lifetime(SOCKET Connection) {
-	// ÔÓÎÛ˜‡ÂÏ ‚ÂÏˇ ÊËÁÌË ÍÎËÂÌÚ‡ ÓÚ ÒÂ‚Â‡
+/// <summary>
+/// —Ñ—É–Ω–∫—Ü–∏—è 
+/// </summary>
+/// <param name="lifetime"></param>
+void client_life(int lifetime)
+{
+	// –≤—ã–≤–æ–¥–∏–º –≤—Ä–µ–º—è –≤ –∫–æ–Ω—Å–æ–ª—å –∏ —Å—Ç–∞–≤–∏–º –≤—Ä–µ–º—è –∂–∏–∑–Ω–∏ –ø—Ä–æ–≥—Ä–∞–º–º—ã
+	if (lifetime > 0) 
+	{
+		custom_output(lifetime);
+	}
+	else 
+	{
+		// –≤—ã—Å—Ç–∞–≤–ª—è–µ–º –º–∞–∫—Å–∏–º–∞–ª—å–Ω–æ –≤–æ–∑–º–æ–∂–Ω–æ–µ –≤—Ä–µ–º—è –∂–∏–∑–Ω–∏ –≤ —Å–µ–∫—É–Ω–¥–∞—Ö
+		std::cout << "Lifetime: " << "eternity" << '\n';
+		Sleep((DWORD)(pow(2, sizeof(DWORD) * 8) - 1) * SECOND);
+	}
+	std::cout << "Time is up! You are going to be disconected in 10 seconds!" << '\n';
+	Sleep(10 * SECOND);
+}
+
+/// <summary>
+/// –ø–æ–ª—É—á–∞–µ–º –≤—Ä–µ–º—è –∂–∏–∑–Ω–∏ –æ—Ç —Å–µ—Ä–≤–µ—Ä–∞
+/// </summary>
+/// <param name="Connection"></param>
+/// <returns></returns>
+int get_lifetime(SOCKET Connection)
+{
 	int lifetime;
 	recv(Connection, (char*)&lifetime, sizeof(int), NULL);
 	return lifetime;
 }
 
-void initialise_WSA() {
-
+/// <summary>
+/// –∏–Ω–∏—Ü–∏–∞–ª–∏–∑–∏—Ä—É–µ–º –±–∏–±–ª–∏–æ—Ç–µ–∫—É
+/// </summary>
+void initialise_WSA() 
+{
 	WSAData wsaData;
 	WORD DLLVersion = MAKEWORD(2, 1);
-	if (WSAStartup(DLLVersion, &wsaData) != 0) {
+	if (WSAStartup(DLLVersion, &wsaData) != 0)
+	{
 		std::cout << "Error" << std::endl;
 		exit(1);
 	}
@@ -56,7 +89,7 @@ int main(int argc, char* argv[]) {
 	listen(sListen, SOMAXCONN);
 
 	SOCKET Connection = socket(AF_INET, SOCK_STREAM, NULL);
-	// ÔÓ‚ÂˇÂÏ Ì‡ ÔÓ‰ÍÎ˛˜ÂÌËÂ Í ÒÂ‚ÂÛ
+	// –ø—Ä–æ–≤–µ—Ä—è–µ–º –Ω–∞ –ø–æ–¥–∫–ª—é—á–µ–Ω–∏–µ –∫ —Å–µ—Ä–≤–µ—Ä—É
 	if (connect(Connection, (SOCKADDR*)&addr, sizeof(addr))) {
 		std::cout << "Failure in connection to server!" << '\n';
 		return 1;
