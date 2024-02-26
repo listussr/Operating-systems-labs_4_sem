@@ -1,0 +1,8 @@
+﻿  Source.cpp
+C:\University\kurs_2\semestr_2\systems\os_laba_6\Server\Server\Source.cpp(42,15): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+C:\University\kurs_2\semestr_2\systems\os_laba_6\Server\Server\Source.cpp(233,44): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+C:\University\kurs_2\semestr_2\systems\os_laba_6\Server\Server\Source.cpp(240,48): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+C:\University\kurs_2\semestr_2\systems\os_laba_6\Server\Server\Source.cpp(446,82): warning C4312: приведение типов: преобразование из "int" в "LPVOID" большего размера
+C:\University\kurs_2\semestr_2\systems\os_laba_6\Server\Server\Source.cpp(484,9): warning C4101: hdc: неиспользованная локальная переменная
+C:\University\kurs_2\semestr_2\systems\os_laba_6\Server\Server\Source.cpp(483,17): warning C4101: ps: неиспользованная локальная переменная
+  Server.vcxproj -> C:\University\kurs_2\semestr_2\systems\os_laba_6\Server\x64\Debug\Server.exe
