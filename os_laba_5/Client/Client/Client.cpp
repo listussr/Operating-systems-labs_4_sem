@@ -6,11 +6,11 @@
 #pragma warning(disable: 4996)
 
 /*
-* Вариант 24
-Усовершенствованная версия чата. Разработать чат для обмена сообщениями.
-Пусть на сервере есть чат, к которому могут одновременно присоединяться только 2 процесса-клиента. Остальные ждут своей очереди.
-Чат общий для всех, у каждого клиента сообщения пишутся своим цветом.
-Если клиент только подключился – ему отсылается вся текущая история и задается цвет фона консоли процесса-клиента на один из заранее предусмотренных.
+* Р’Р°СЂРёР°РЅС‚ 24
+РЈСЃРѕРІРµСЂС€РµРЅСЃС‚РІРѕРІР°РЅРЅР°СЏ РІРµСЂСЃРёСЏ С‡Р°С‚Р°. Р Р°Р·СЂР°Р±РѕС‚Р°С‚СЊ С‡Р°С‚ РґР»СЏ РѕР±РјРµРЅР° СЃРѕРѕР±С‰РµРЅРёСЏРјРё.
+РџСѓСЃС‚СЊ РЅР° СЃРµСЂРІРµСЂРµ РµСЃС‚СЊ С‡Р°С‚, Рє РєРѕС‚РѕСЂРѕРјСѓ РјРѕРіСѓС‚ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ РїСЂРёСЃРѕРµРґРёРЅСЏС‚СЊСЃСЏ С‚РѕР»СЊРєРѕ 2 РїСЂРѕС†РµСЃСЃР°-РєР»РёРµРЅС‚Р°. РћСЃС‚Р°Р»СЊРЅС‹Рµ Р¶РґСѓС‚ СЃРІРѕРµР№ РѕС‡РµСЂРµРґРё.
+Р§Р°С‚ РѕР±С‰РёР№ РґР»СЏ РІСЃРµС…, Сѓ РєР°Р¶РґРѕРіРѕ РєР»РёРµРЅС‚Р° СЃРѕРѕР±С‰РµРЅРёСЏ РїРёС€СѓС‚СЃСЏ СЃРІРѕРёРј С†РІРµС‚РѕРј.
+Р•СЃР»Рё РєР»РёРµРЅС‚ С‚РѕР»СЊРєРѕ РїРѕРґРєР»СЋС‡РёР»СЃСЏ вЂ“ РµРјСѓ РѕС‚СЃС‹Р»Р°РµС‚СЃСЏ РІСЃСЏ С‚РµРєСѓС‰Р°СЏ РёСЃС‚РѕСЂРёСЏ Рё Р·Р°РґР°РµС‚СЃСЏ С†РІРµС‚ С„РѕРЅР° РєРѕРЅСЃРѕР»Рё РїСЂРѕС†РµСЃСЃР°-РєР»РёРµРЅС‚Р° РЅР° РѕРґРёРЅ РёР· Р·Р°СЂР°РЅРµРµ РїСЂРµРґСѓСЃРјРѕС‚СЂРµРЅРЅС‹С….
 */
 
 namespace glv 
@@ -19,7 +19,9 @@ namespace glv
 	bool connected_flag = true;
 }
 
-// функция инициализации использования библиотеки (специализируем последнюю версию)
+/// <summary>
+/// С„СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ Р±РёР±Р»РёРѕС‚РµРєРё (СЃРїРµС†РёР°Р»РёР·РёСЂСѓРµРј РїРѕСЃР»РµРґРЅСЋСЋ РІРµСЂСЃРёСЋ)
+/// </summary>
 void initialise_WSA() 
 {
 	WSAData wsaData;
@@ -31,7 +33,10 @@ void initialise_WSA()
 	}
 }
 
-// аварийное завершение программы
+/// <summary>
+/// Р°РІР°СЂРёР№РЅРѕРµ Р·Р°РІРµСЂС€РµРЅРёРµ РїСЂРѕРіСЂР°РјРјС‹
+/// </summary>
+/// <param name="message"></param>
 void mistake(const char* message) 
 {
 	std::cout << message << '\n';
@@ -40,7 +45,7 @@ void mistake(const char* message)
 	exit(1);
 }
 
-// получаем цвет консоли от сервера
+// РїРѕР»СѓС‡Р°РµРј С†РІРµС‚ РєРѕРЅСЃРѕР»Рё РѕС‚ СЃРµСЂРІРµСЂР°
 void set_color_theme()
 {
 	char* theme = new char[9];
@@ -53,7 +58,9 @@ void set_color_theme()
 	system(theme);
 }
 
-// получаем приветствие от сервера
+/// <summary>
+/// РїРѕР»СѓС‡Р°РµРј РїСЂРёРІРµС‚СЃС‚РІРёРµ РѕС‚ СЃРµСЂРІРµСЂР°
+/// </summary>
 void get_hello_message() 
 {
 	char hello_message[41];
@@ -65,21 +72,23 @@ void get_hello_message()
 	std::cout << hello_message << '\n';
 }
 
-// получаем историю сообщений от сервера
+/// <summary>
+/// РїРѕР»СѓС‡Р°РµРј РёСЃС‚РѕСЂРёСЋ СЃРѕРѕР±С‰РµРЅРёР№ РѕС‚ СЃРµСЂРІРµСЂР°
+/// </summary>
 void get_chat_history() 
 {
 	size_t history_size;
 	int message_size, name_size;
-	char* message, *name;
-	// получаем размер истории - кол-во сообщений в ней
+	char* message, * name;
+	// РїРѕР»СѓС‡Р°РµРј СЂР°Р·РјРµСЂ РёСЃС‚РѕСЂРёРё - РєРѕР»-РІРѕ СЃРѕРѕР±С‰РµРЅРёР№ РІ РЅРµР№
 	if (recv(glv::Connection, (char*)&history_size, sizeof(size_t), NULL) < 0) 
 	{
 		mistake("Failure in getting history size!");
 	}
-	// получаем каждое сообщение
+	// РїРѕР»СѓС‡Р°РµРј РєР°Р¶РґРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ
 	for (size_t i = 0; i < history_size; ++i)
 	{
-		// получаем имя отправителя сообщения
+		// РїРѕР»СѓС‡Р°РµРј РёРјСЏ РѕС‚РїСЂР°РІРёС‚РµР»СЏ СЃРѕРѕР±С‰РµРЅРёСЏ
 		if (recv(glv::Connection, (char*)&name_size, sizeof(int), NULL) < 0)
 		{
 			mistake("Failure in receiving name size!");
@@ -90,40 +99,43 @@ void get_chat_history()
 		{
 			mistake("Failure in getting name!");
 		}
-		// получаем размер сообщения
+		// РїРѕР»СѓС‡Р°РµРј СЂР°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ
 		if (recv(glv::Connection, (char*)&message_size, sizeof(int), NULL) < 0)
 		{
 			mistake("Failure in getting message size!");
 		}
 		message = new char[message_size + 1];
 		message[message_size] = '\0';
-		// получаем само сообщение
+		// РїРѕР»СѓС‡Р°РµРј СЃР°РјРѕ СЃРѕРѕР±С‰РµРЅРёРµ
 		if (recv(glv::Connection, message, message_size, NULL) < 0)
 		{
 			mistake("Failure in getting message!");
 		}
 		std::cout << name << ": ";
 		std::cout << message << '\n';
-		// чистим память
+		// С‡РёСЃС‚РёРј РїР°РјСЏС‚СЊ
 		delete[] message;
+		delete[] name;
 	}
 }
 
-// функция получения сообщения от собеседника
+/// <summary>
+/// С„СѓРЅРєС†РёСЏ РїРѕР»СѓС‡РµРЅРёСЏ СЃРѕРѕР±С‰РµРЅРёСЏ РѕС‚ СЃРѕР±РµСЃРµРґРЅРёРєР°
+/// </summary>
 void get_message() 
 {
-	// пока мы подключены к серверу получаем сообщения
+	// РїРѕРєР° РјС‹ РїРѕРґРєР»СЋС‡РµРЅС‹ Рє СЃРµСЂРІРµСЂСѓ РїРѕР»СѓС‡Р°РµРј СЃРѕРѕР±С‰РµРЅРёСЏ
 	while (glv::connected_flag) 
 	{
 		int client_number;
 		int message_size;
 		char* message;
-		// получаем номер клиента, чтобы знать от кого сообщение
+		// РїРѕР»СѓС‡Р°РµРј РЅРѕРјРµСЂ РєР»РёРµРЅС‚Р°, С‡С‚РѕР±С‹ Р·РЅР°С‚СЊ РѕС‚ РєРѕРіРѕ СЃРѕРѕР±С‰РµРЅРёРµ
 		if (recv(glv::Connection, (char*)&client_number, sizeof(int), NULL) < 0)
 		{
 			mistake("Failure in getting client number!");
 		}
-		// получаем размер сообщения
+		// РїРѕР»СѓС‡Р°РµРј СЂР°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ
 		if (recv(glv::Connection, (char*)&message_size, sizeof(int), NULL) < 0)
 		{
 			mistake("Failure in getting message size!");
@@ -131,37 +143,41 @@ void get_message()
 		message = new char[message_size + 1];
 		//std::cout << "Receiving message size: " << message_size << '\n';
 		message[message_size] = '\0';
-		// получаем само сообщение
+		// РїРѕР»СѓС‡Р°РµРј СЃР°РјРѕ СЃРѕРѕР±С‰РµРЅРёРµ
 		if (recv(glv::Connection, message, message_size, NULL) < 0)
 		{
 			mistake("Failure in getting message!");
 		}
-		// выводим сообщение в чат
+		// РІС‹РІРѕРґРёРј СЃРѕРѕР±С‰РµРЅРёРµ РІ С‡Р°С‚
 		std::cout << "User #" << client_number << ": ";
 		std::cout << message << '\n';
-		// чистим память
+		// С‡РёСЃС‚РёРј РїР°РјСЏС‚СЊ
 		delete[] message;
 	}
 }
 
-// функция отправки сообщения
+/// <summary>
+/// С„СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёСЏ
+/// </summary>
 void send_message()
 {
 	std::string message;
 	getline(std::cin, message);
-	int message_size = message.size();
-	// проверка на сообщение о выходе из чата
+	size_t message_size = message.size();
+	// РїСЂРѕРІРµСЂРєР° РЅР° СЃРѕРѕР±С‰РµРЅРёРµ Рѕ РІС‹С…РѕРґРµ РёР· С‡Р°С‚Р°
 	if (message == "--leave") 
 	{
 		glv::connected_flag = false;
 	}
-	// отсылаем сначала размер сообщения, затем сообщение
+	// РѕС‚СЃС‹Р»Р°РµРј СЃРЅР°С‡Р°Р»Р° СЂР°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ, Р·Р°С‚РµРј СЃРѕРѕР±С‰РµРЅРёРµ
 	//std::cout << "Sending message size " << message.size() << '\n';
 	send(glv::Connection, (char*)&message_size, sizeof(int), NULL);
 	send(glv::Connection, message.c_str(), message_size, NULL);
 }
 
-// функция, контролирующая работу чату на стороне пользователя
+/// <summary>
+/// С„СѓРЅРєС†РёСЏ, РєРѕРЅС‚СЂРѕР»РёСЂСѓСЋС‰Р°СЏ СЂР°Р±РѕС‚Сѓ С‡Р°С‚Сѓ РЅР° СЃС‚РѕСЂРѕРЅРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+/// </summary>
 void handle_chat() 
 {
 	set_color_theme();
@@ -188,13 +204,12 @@ int main(int argc, char* argv[])
 	listen(sListen, SOMAXCONN);
 
 	glv::Connection = socket(AF_INET, SOCK_STREAM, NULL);
-	// проверяем на подключение к серверу
+	// РїСЂРѕРІРµСЂСЏРµРј РЅР° РїРѕРґРєР»СЋС‡РµРЅРёРµ Рє СЃРµСЂРІРµСЂСѓ
 	if (connect(glv::Connection, (SOCKADDR*)&addr, sizeof(addr))) 
 	{
 		std::cout << "Failure in connection to server!" << '\n';
 		return 1;
 	}
-	//std::cout << "Connected!" << '\n';
 	handle_chat();
 	return 0;
 }
