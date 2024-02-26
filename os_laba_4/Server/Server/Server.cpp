@@ -1,29 +1,39 @@
 #pragma comment(lib, "ws2_32.lib")
 #include <winsock2.h>
 #include <iostream>
-#include <limits.h>
 #include <string>
 #pragma warning(disable: 4996)
 
 /*
-Вариант 23-24. (24 вариант с помощью сокетов)
-С процесса-сервера запускается n процессов клиентов. Для каждого из созданных клиентов указывается время жизни (в секундах).
-Клиент запускается, существует заданное время и завершает работу. Также следует предусмотреть значение для бесконечного времени.
-Требуется не менее трех одновременно запускаемых процессов-клиентов.
+Р’Р°СЂРёР°РЅС‚ 23-24. (24 РІР°СЂРёР°РЅС‚ СЃ РїРѕРјРѕС‰СЊСЋ СЃРѕРєРµС‚РѕРІ)
+РЎ РїСЂРѕС†РµСЃСЃР°-СЃРµСЂРІРµСЂР° Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ n РїСЂРѕС†РµСЃСЃРѕРІ РєР»РёРµРЅС‚РѕРІ. Р”Р»СЏ РєР°Р¶РґРѕРіРѕ РёР· СЃРѕР·РґР°РЅРЅС‹С… РєР»РёРµРЅС‚РѕРІ СѓРєР°Р·С‹РІР°РµС‚СЃСЏ РІСЂРµРјСЏ Р¶РёР·РЅРё (РІ СЃРµРєСѓРЅРґР°С…).
+РљР»РёРµРЅС‚ Р·Р°РїСѓСЃРєР°РµС‚СЃСЏ, СЃСѓС‰РµСЃС‚РІСѓРµС‚ Р·Р°РґР°РЅРЅРѕРµ РІСЂРµРјСЏ Рё Р·Р°РІРµСЂС€Р°РµС‚ СЂР°Р±РѕС‚Сѓ. РўР°РєР¶Рµ СЃР»РµРґСѓРµС‚ РїСЂРµРґСѓСЃРјРѕС‚СЂРµС‚СЊ Р·РЅР°С‡РµРЅРёРµ РґР»СЏ Р±РµСЃРєРѕРЅРµС‡РЅРѕРіРѕ РІСЂРµРјРµРЅРё.
+РўСЂРµР±СѓРµС‚СЃСЏ РЅРµ РјРµРЅРµРµ С‚СЂРµС… РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ Р·Р°РїСѓСЃРєР°РµРјС‹С… РїСЂРѕС†РµСЃСЃРѕРІ-РєР»РёРµРЅС‚РѕРІ.
 */
 
 SOCKET Connections[100];
 int counter = 0;
 
-bool is_infinity() {
+/// <summary>
+/// РіРµРЅРµСЂРёСЂСѓРµРј С„Р»Р°Рі Р±РµСЃРєРѕРЅРµС‡РЅРѕРіРѕ РІСЂРµРјРµРЅРё СЃ РІРµСЂРѕСЏС‚РЅРѕСЃС‚СЊСЋ 1/4
+/// </summary>
+/// <returns>is_infinity -> bool</returns>
+bool is_infinity()
+{
 	int min = 0;
 	int max = 3;
 	int result = min + rand() % (max - min + 1);
 	return !result;
 }
 
-int generate_lifetime() {
-	if (is_infinity()) {
+/// <summary>
+/// РіРµРЅРµСЂРёСЂСѓРµРј РІСЂРµРјСЏ Р¶РёР·РЅРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅР° СЃРµСЂРІРµСЂРµ
+/// </summary>
+/// <returns>time -> int</returns>
+int generate_lifetime()
+{
+	if (is_infinity()) 
+	{
 		return -1;
 	}
 	int min = 1;
@@ -32,41 +42,90 @@ int generate_lifetime() {
 	return time;
 }
 
-void randomise() {
+/// <summary>
+/// РґРѕР±Р°РІР»СЏРµРј СЂР°РЅРґРѕРј
+/// </summary>
+void randomise() 
+{
 	srand(time(NULL));
 }
 
-void initialise_WSA() {
+/// <summary>
+/// РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РІРµСЂСЃРёСЋ Р±РёР±Р»РёРѕС‚РµРєРё
+/// </summary>
+void initialise_WSA() 
+{
 	WSAData wsaData;
 	WORD DLLVersion = MAKEWORD(2, 1);
-	if (WSAStartup(DLLVersion, &wsaData) != 0) {
+	if (WSAStartup(DLLVersion, &wsaData) != 0)
+	{
 		std::cout << "Error" << std::endl;
 		exit(1);
 	}
 }
 
-void start_client_session(int client_amount) {
+/// <summary>
+/// С„СѓРЅРєС†РёСЏ Р·Р°РїСѓСЃРєР° РїСЂРѕС†РµСЃСЃР° РєР»РёРµРЅС‚Р°
+/// </summary>
+void start_client_session() 
+{
 	const char* navigation_command = "cd C:\\University\\kurs_2\\semestr_2\\systems\\os_laba_4\\Client\\x64\\Debug";
 	const char* run_command = "start C:\\University\\kurs_2\\semestr_2\\systems\\os_laba_4\\Client\\x64\\Debug\\Client.exe";
-	// проверка на случай непредвиденных обстоятельств
-	int navigation_succes = system(navigation_command);
-	if (navigation_succes) {
+	// РїСЂРѕРІРµСЂРєР° РЅР° СЃР»СѓС‡Р°Р№ РЅРµРїСЂРµРґРІРёРґРµРЅРЅС‹С… РѕР±СЃС‚РѕСЏС‚РµР»СЊСЃС‚РІ
+	int navigation_failure = system(navigation_command);
+	if (navigation_failure)
+	{
 		std::cout << "Failure in system navigation!" << '\n';
 		exit(1);
 	}
-	// запускаем собранную программу у клиента
+	// Р·Р°РїСѓСЃРєР°РµРј СЃРѕР±СЂР°РЅРЅСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ Сѓ РєР»РёРµРЅС‚Р°
 	system(run_command);
+	
+	/*STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si, si.cb);
+	si.cb = sizeof(si);
+	ZeroMemory(&pi, sizeof(pi));
+	for (int i = 0; i < amount_of_processes; ++i) {
+		if (!CreateProcess(
+			L"C:\\University\\kurs_2\\semestr_2\\systems\\os_laba_4\\Client\\x64\\Debug\\Client.exe",
+			NULL,
+			NULL,
+			NULL,
+			FALSE,
+			CREATE_NEW_CONSOLE,
+			NULL,
+			NULL,
+			&si,
+			&pi)
+			) {
+			std::cout << "Failure in creating process!" << '\n';
+			exit(1);
+		}
+		Sleep(1 * 1000);
+	}*/
 }
 
-void connection(SOCKET sListen, SOCKADDR_IN addr, int sizeofaddr, int amount_of_clients) {
+/// <summary>
+/// Р·Р°РїСѓСЃРє РїСЂРѕС†РµСЃСЃРѕРІ РєР»РёРµРЅС‚РѕРІ Рё РіРµРЅРµСЂРёСЂРѕРІР°РЅРёРµ РґР»СЏ РЅРёС… РІСЂРјРµРЅРµРЅРё Р¶РёР·РЅРё РЅР° СЃРµСЂРІРµСЂРµ
+/// </summary>
+/// <param name="sListen"></param>
+/// <param name="addr"></param>
+/// <param name="sizeofaddr"></param>
+/// <param name="amount_of_clients"></param>
+void connection(SOCKET sListen, SOCKADDR_IN addr, int sizeofaddr, int amount_of_clients) 
+{
 	SOCKET newConnection;
-	for (int i = 0; i < amount_of_clients; ++i) {
-		start_client_session(amount_of_clients);
+	for (int i = 0; i < amount_of_clients; ++i) 
+	{
+		start_client_session();
 		newConnection = accept(sListen, (SOCKADDR*)&addr, &sizeofaddr);
-		if (newConnection == 0) {
+		if (!newConnection) 
+		{
 			std::cout << "Error #2\n";
 		}
-		else {
+		else 
+		{
 			std::cout << "Client Connected!\n";
 			int lifetime = generate_lifetime();
 			send(newConnection, (char*)&lifetime, sizeof(int), NULL);
@@ -76,31 +135,44 @@ void connection(SOCKET sListen, SOCKADDR_IN addr, int sizeofaddr, int amount_of_
 	}
 }
 
-bool is_in_border(int left, int right, int value) {
+bool is_in_border(int left, int right, int value) 
+{
 	return left <= value && value < right;
 }
 
-int get_int() {
+/// <summary>
+/// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РєР»РёРµРЅС‚РѕРІ СЃРµСЂРІРµСЂР° РёР· РєРѕРЅСЃРѕР»Рё
+/// </summary>
+/// <returns></returns>
+int get_int() 
+{
 	std::cout << "Enter amount of clients that will be opened (value between 3 and 100): ";
 	std::string str;
 	bool flag = true;
 	int value, left{3}, right{100};
-	while (flag) {
+	// РїРѕРєР° РІС…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ РЅРµ СЏРІР»СЏСЋС‚СЃСЏ РєРѕСЂРµРєС‚РЅС‹РјРё РїРѕРІС‚РѕСЂСЏРµРј РІРІРѕРґ
+	while (flag)
+	{
 		std::cin >> str;
-		try {
+		try 
+		{
 			value = std::stoi(str);
 			if (!is_in_border(3, 100, value))
+			{
 				throw std::invalid_argument("");
+			}
 			flag = false;
 		}
-		catch (std::invalid_argument) {
+		catch (std::invalid_argument) 
+		{
 			std::cout << "Incorrect argument or number is outside the borders! Retry input: ";
 		}
 	}
 	return value;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) 
+{
 	int amount_of_clients = get_int();
 	randomise();
 	initialise_WSA();
