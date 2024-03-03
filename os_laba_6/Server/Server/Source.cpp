@@ -1,4 +1,4 @@
-#include<WinSock2.h>
+#include <WinSock2.h>
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
@@ -6,8 +6,10 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <fstream>
+#include <chrono>
 #pragma comment(lib, "ws2_32.lib")
-#pragma warning(disable: 4996) // для inet_addr
+#pragma warning(disable: 4996) // РґР»СЏ inet_addr
 
 #define INT_SIZE sizeof(int)
 #define ULL_SIZE sizeof(size_t)
@@ -15,7 +17,18 @@
 #define MILLISECOND 1
 
 /// <summary>
-/// пространство имён с переменными для работы с графическим интерфейсом
+/// РїРµСЂРµС‡РёСЃР»РµРЅРёРµ С‚РёРїРѕРІ СЃРѕРѕР±С‰РµРЅРёР№ РґР»СЏ Р»РѕРіРёСЂРѕРІР°РЅРёСЏ
+/// </summary>
+enum messagetype
+{
+    CONNECTING_FLAG = 1, // С„Р»Р°Рі РїРѕРґРєР»СЋС‡РµРЅРёСЏ РѕС‚РєР»СЋС‡РµРЅРёСЏ 
+    DISCONNECTING_FLAG,
+    MESSAGE_GET, // СЃР°РјРѕ СЃРѕРѕР±С‰РµРЅРёРµ
+    MESSAGE_RESEND,
+};
+
+/// <summary>
+/// РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІРѕ РёРјС‘РЅ СЃ РїРµСЂРµРјРµРЅРЅС‹РјРё РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ РіСЂР°С„РёС‡РµСЃРєРёРј РёРЅС‚РµСЂС„РµР№СЃРѕРј
 /// </summary>
 namespace fglv
 {
@@ -25,10 +38,10 @@ namespace fglv
 typedef std::pair<std::wstring, const wchar_t*> msg_info;
 
 HINSTANCE hInst;
-static TCHAR szTitle[] = _T("Чат");
+static TCHAR szTitle[] = _T("Р§Р°С‚");
 
 /// <summary>
-/// пространство имён с переменными для клиент-серверного взаимодействия
+/// РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІРѕ РёРјС‘РЅ СЃ РїРµСЂРµРјРµРЅРЅС‹РјРё РґР»СЏ РєР»РёРµРЅС‚-СЃРµСЂРІРµСЂРЅРѕРіРѕ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёСЏ
 /// </summary>
 namespace glv
 {
@@ -36,16 +49,38 @@ namespace glv
     std::vector<SOCKET> Sockets;
     const DWORD max_users = 2;
     std::vector<msg_info> History;
-    int actual_clients[2];
+    std::vector<int> disconnected_clients;
+    int actual_clients[2] = { -1, -1 };
     bool process_flag = true;
     bool server_loaded = false;
     int closed_client;
     int current_users = 0;
+    std::ofstream out;
 }
 
-void randomise()
+/// <summary>
+/// Р¤СѓРЅРєС†РёСЏ Р»РѕРіРёСЂРѕРІР°РЅРёСЏ РІ С„Р°Р№Р» РІСЃРµС… СЃРѕР±С‹С‚РёР№, РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјС‹С… РЅР° СЃРµСЂРІРµСЂРµ
+/// </summary>
+void Logging(int client_number, int message_size, const char* message, messagetype operation_flag)
 {
-    srand(time(NULL));
+    auto time = std::chrono::system_clock::now();
+    time_t cur_time = std::chrono::system_clock::to_time_t(time);
+    glv::out << std::ctime(&cur_time) << '\n';
+    switch (operation_flag)
+    {
+        case(CONNECTING_FLAG):
+            glv::out << "{ Client #" << client_number << " was connected to the chat }" << '\n';
+            break;
+        case(DISCONNECTING_FLAG):
+            glv::out << "{ Client #" << client_number << " was disconnected from the chat }" << '\n';
+            break;
+        case(MESSAGE_GET):
+            glv::out << "<" << '\n' << "Client #" << client_number << ". Message size: " << message_size << " symbols. Message: " << message << ">" << '\n';
+            break;
+        case(MESSAGE_RESEND):
+            glv::out << "[ Message was forwared to the client #" << client_number << " ]" << '\n';
+            break;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -53,7 +88,7 @@ void randomise()
 ///////////////////////////////////////////////////////////////////////
 
 /// <summary>
-/// Функция перевода ASCII строки в расширенную строку
+/// Р¤СѓРЅРєС†РёСЏ РїРµСЂРµРІРѕРґР° ASCII СЃС‚СЂРѕРєРё РІ СЂР°СЃС€РёСЂРµРЅРЅСѓСЋ СЃС‚СЂРѕРєСѓ
 /// </summary>
 /// <param name="str"></param>
 /// <returns>str in UTF_8</returns>
@@ -68,7 +103,7 @@ std::wstring StrToWstr(std::string str)
 }
 
 /// <summary>
-/// Функция перевода расширенной строки в ASCII строку
+/// Р¤СѓРЅРєС†РёСЏ РїРµСЂРµРІРѕРґР° СЂР°СЃС€РёСЂРµРЅРЅРѕР№ СЃС‚СЂРѕРєРё РІ ASCII СЃС‚СЂРѕРєСѓ
 /// </summary>
 /// <param name="wstr"></param>
 /// <returns>wstr in ASCII</returns>
@@ -83,7 +118,7 @@ std::string WstrToStr(std::wstring wstr)
 }
 
 /// <summary>
-/// Функция очистки динамической памяти в истории сообщений
+/// Р¤СѓРЅРєС†РёСЏ РѕС‡РёСЃС‚РєРё РґРёРЅР°РјРёС‡РµСЃРєРѕР№ РїР°РјСЏС‚Рё РІ РёСЃС‚РѕСЂРёРё СЃРѕРѕР±С‰РµРЅРёР№
 /// </summary>
 void CleanHistoryMemory()
 {
@@ -94,32 +129,39 @@ void CleanHistoryMemory()
 }
 
 /// <summary>
-/// Функция обработки ошибок
+/// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё РѕС€РёР±РѕРє
 /// </summary>
 /// <param name="message"></param>
 void Mistake(const wchar_t* message)
 {
-    MessageBox(NULL, message, L"Ошибка", NULL);
+    MessageBox(NULL, message, L"РћС€РёР±РєР°", NULL);
     for (SOCKET socket : glv::Sockets)
     {
         closesocket(socket);
     }
     CleanHistoryMemory();
     WSACleanup();
-    //exit(1);
 }
 
 /// <summary>
-/// Функция фиксации нового клиента
+/// Р¤СѓРЅРєС†РёСЏ С„РёРєСЃР°С†РёРё РЅРѕРІРѕРіРѕ РєР»РёРµРЅС‚Р°
 /// </summary>
 /// <param name="client_number"></param>
 void update_users(int client_number)
 {
-    if (glv::actual_clients[0] == glv::closed_client)
+    /*if (glv::actual_clients[0] == glv::disconnected_clients.back())
     {
         glv::actual_clients[0] = glv::actual_clients[1];
         glv::actual_clients[1] = client_number;
-
+    }
+    else
+    {
+        glv::actual_clients[1] = client_number;
+    }
+    */
+    if (glv::actual_clients[0] == -1)
+    {
+        glv::actual_clients[0] = client_number;
     }
     else
     {
@@ -128,7 +170,7 @@ void update_users(int client_number)
 }
 
 /// <summary>
-/// Функция добавления сообщения на экран
+/// Р¤СѓРЅРєС†РёСЏ РґРѕР±Р°РІР»РµРЅРёСЏ СЃРѕРѕР±С‰РµРЅРёСЏ РЅР° СЌРєСЂР°РЅ
 /// </summary>
 /// <param name="eWnd"></param>
 /// <param name="text"></param>
@@ -139,7 +181,7 @@ void AddText(HWND eWnd, const TCHAR* text)
 }
 
 /// <summary>
-/// Функция пересылки сообщения
+/// Р¤СѓРЅРєС†РёСЏ РїРµСЂРµСЃС‹Р»РєРё СЃРѕРѕР±С‰РµРЅРёСЏ
 /// </summary>
 /// <param name="message"></param>
 /// <param name="size_of_message"></param>
@@ -147,49 +189,51 @@ void AddText(HWND eWnd, const TCHAR* text)
 void ResendMessage(const wchar_t* wmessage, int size_of_message, int client_number)
 {
     SOCKET current_connection = glv::Sockets[glv::actual_clients[(glv::actual_clients[0] != client_number) ? 0 : 1]];
-
-    AddText(fglv::hChat, L"---------------\n");
-    AddText(fglv::hChat, L"Клиент, который получит сообщение: ");
-    AddText(fglv::hChat, std::to_wstring(client_number).c_str());
-    AddText(fglv::hChat, L" | подключение ");
-    AddText(fglv::hChat, std::to_wstring(current_connection).c_str());
-
-    for (int i = 0; i < 2; ++i)
+    if (current_connection > 0)
     {
+        AddText(fglv::hChat, L"---------------\n");
+        AddText(fglv::hChat, L"РљР»РёРµРЅС‚, РєРѕС‚РѕСЂС‹Р№ РїРѕР»СѓС‡РёС‚ СЃРѕРѕР±С‰РµРЅРёРµ: ");
+        AddText(fglv::hChat, std::to_wstring(client_number).c_str());
+        AddText(fglv::hChat, L" | РїРѕРґРєР»СЋС‡РµРЅРёРµ ");
+        AddText(fglv::hChat, std::to_wstring(current_connection).c_str());
+
+        for (int i = 0; i < 2; ++i)
+        {
+            AddText(fglv::hChat, L"\n");
+            AddText(fglv::hChat, L"Users[");
+            AddText(fglv::hChat, std::to_wstring(i).c_str());
+            AddText(fglv::hChat, L"]: ");
+            AddText(fglv::hChat, std::to_wstring(glv::actual_clients[i]).c_str());
+            AddText(fglv::hChat, L"\n");
+            AddText(fglv::hChat, L"Connections[");
+            AddText(fglv::hChat, std::to_wstring(i).c_str());
+            AddText(fglv::hChat, L"]: ");
+            AddText(fglv::hChat, std::to_wstring(glv::Sockets[glv::actual_clients[i]]).c_str());
+        }
+
         AddText(fglv::hChat, L"\n");
-        AddText(fglv::hChat, L"Users[");
-        AddText(fglv::hChat, std::to_wstring(i).c_str());
-        AddText(fglv::hChat, L"]: ");
-        AddText(fglv::hChat, std::to_wstring(glv::actual_clients[i]).c_str());
+        AddText(fglv::hChat, L"Size: ");
+        AddText(fglv::hChat, std::to_wstring(size_of_message).c_str());
+
+        send(current_connection, (char*)&client_number, INT_SIZE, NULL);
+        send(current_connection, (char*)&size_of_message, INT_SIZE, NULL);
+
         AddText(fglv::hChat, L"\n");
-        AddText(fglv::hChat, L"Connections[");
-        AddText(fglv::hChat, std::to_wstring(i).c_str());
-        AddText(fglv::hChat, L"]: ");
-        AddText(fglv::hChat, std::to_wstring(glv::Sockets[glv::actual_clients[i]]).c_str());
+        AddText(fglv::hChat, L"Message: ");
+        AddText(fglv::hChat, wmessage);
+
+        std::wstring wstr(wmessage);
+        std::string str = WstrToStr(wstr);
+        const char* message = str.c_str();
+
+        send(current_connection, message, size_of_message, NULL);
+        Logging(client_number, size_of_message, message, MESSAGE_RESEND);
+        AddText(fglv::hChat, L"---------------\n");
     }
-
-    AddText(fglv::hChat, L"\n");
-    AddText(fglv::hChat, L"Size: ");
-    AddText(fglv::hChat, std::to_wstring(size_of_message).c_str());
-
-    send(current_connection, (char*)&client_number, INT_SIZE, NULL);
-    send(current_connection, (char*)&size_of_message, INT_SIZE, NULL);
-
-    AddText(fglv::hChat, L"\n");
-    AddText(fglv::hChat, L"Message: ");
-    AddText(fglv::hChat, wmessage);
-    
-    std::wstring wstr(wmessage);
-    std::string str = WstrToStr(wstr);
-    const char* message = str.c_str();
-
-    send(current_connection, message, size_of_message, NULL);
-
-    AddText(fglv::hChat, L"---------------\n");
 }
 
 /// <summary>
-/// Функция обработки сообщения
+/// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё СЃРѕРѕР±С‰РµРЅРёСЏ
 /// </summary>
 /// <param name="message"></param>
 /// <param name="message_length"></param>
@@ -197,19 +241,19 @@ void ResendMessage(const wchar_t* wmessage, int size_of_message, int client_numb
 /// <param name="connection_flag"></param>
 void MessageHandler(const wchar_t* message, int message_length, int client_number, bool& connection_flag)
 {
-    // проверяем на соответствие команде о выходе
+    // РїСЂРѕРІРµСЂСЏРµРј РЅР° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ РєРѕРјР°РЅРґРµ Рѕ РІС‹С…РѕРґРµ
     if (!wcscmp(message, L"--leave\n"))
     {
         --glv::current_users;
         connection_flag = false;
     }
-    // записываем сообщение в историю
-    std::wstring name = L"Пользователь #";
+    // Р·Р°РїРёСЃС‹РІР°РµРј СЃРѕРѕР±С‰РµРЅРёРµ РІ РёСЃС‚РѕСЂРёСЋ
+    std::wstring name = L"РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ #";
     name += std::to_wstring(client_number);
     AddText(fglv::hChat, name.c_str());
     AddText(fglv::hChat, L"\n");
 
-    AddText(fglv::hChat, L"Размер сообщения: ");
+    AddText(fglv::hChat, L"Р Р°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ: ");
     AddText(fglv::hChat, std::to_wstring(message_length).c_str());
     AddText(fglv::hChat, L"\n");
 
@@ -221,30 +265,32 @@ void MessageHandler(const wchar_t* message, int message_length, int client_numbe
     history_msg[message_length] = L'\0';
     msg_info msg(name, history_msg);
     glv::History.push_back(msg);
-    AddText(fglv::hChat, L"Последнее сообщение в истории: ");
+    /*
+    AddText(fglv::hChat, L"РџРѕСЃР»РµРґРЅРµРµ СЃРѕРѕР±С‰РµРЅРёРµ РІ РёСЃС‚РѕСЂРёРё: ");
     AddText(fglv::hChat, (glv::History[glv::History.size() - 1]).first.c_str());
     AddText(fglv::hChat, L" ");
     AddText(fglv::hChat, (glv::History[glv::History.size() - 1]).second);
     AddText(fglv::hChat, L"\n");
-    // отправляем сообщение другому пользователю
-    if(glv::current_users)
+    */
+    // РѕС‚РїСЂР°РІР»СЏРµРј СЃРѕРѕР±С‰РµРЅРёРµ РґСЂСѓРіРѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ
+    if(glv::current_users > 0)
         ResendMessage(message, message_length, client_number);
 }
 
 /// <summary>
-/// Функция отправки истории новому пользователю
+/// Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё РёСЃС‚РѕСЂРёРё РЅРѕРІРѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ
 /// </summary>
 /// <param name="client_number"></param>
 void SendHistory(int client_number)
 {
-    // выбираем какому из 2 активных пользователей отправить сообщение
+    // РІС‹Р±РёСЂР°РµРј РєР°РєРѕРјСѓ РёР· 2 Р°РєС‚РёРІРЅС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ РѕС‚РїСЂР°РІРёС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ
     SOCKET current_connection = glv::Sockets[glv::actual_clients[(glv::actual_clients[0] != client_number) ? 1 : 0]];
-    // отправляем кол-во сообщений из истории
+    // РѕС‚РїСЂР°РІР»СЏРµРј РєРѕР»-РІРѕ СЃРѕРѕР±С‰РµРЅРёР№ РёР· РёСЃС‚РѕСЂРёРё
     size_t history_size = glv::History.size();
     send(current_connection, (char*)&history_size, ULL_SIZE, NULL);
     for (msg_info msg : glv::History)
     {
-        // отправляем все сообщения из истории
+        // РѕС‚РїСЂР°РІР»СЏРµРј РІСЃРµ СЃРѕРѕР±С‰РµРЅРёСЏ РёР· РёСЃС‚РѕСЂРёРё
         std::string namestr = WstrToStr(msg.first);
         const char* name = namestr.c_str();
         int size_of_name = msg.first.size();
@@ -261,14 +307,15 @@ void SendHistory(int client_number)
 }
 
 /// <summary>
-/// Функция обработки клиента чата
+/// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё РєР»РёРµРЅС‚Р° С‡Р°С‚Р°
 /// </summary>
 /// <param name="number"></param>
 void ClientHandler(int number)
 {
-    AddText(fglv::hChat, L"Клиент подключен");
+    AddText(fglv::hChat, L"РљР»РёРµРЅС‚ РїРѕРґРєР»СЋС‡РµРЅ");
     AddText(fglv::hChat, L"\n");
     int client_number = number - 1;
+    Logging(client_number, NULL, NULL , CONNECTING_FLAG);
     int size_of_message;
     bool connected = true;
     const wchar_t* wmessage;
@@ -285,9 +332,9 @@ void ClientHandler(int number)
         if (recv(glv::Sockets[client_number], (char*)&size_of_message, INT_SIZE, NULL) < 0)
         {
             ReleaseSemaphore(glv::hSemaphore, glv::current_users - 1, NULL);
-            Mistake(L"Ошибка получения размера сообщения строка 268");
+            Mistake(L"РћС€РёР±РєР° РїРѕР»СѓС‡РµРЅРёСЏ СЂР°Р·РјРµСЂР° СЃРѕРѕР±С‰РµРЅРёСЏ СЃС‚СЂРѕРєР° 268");
         }
-        AddText(fglv::hChat, L"Размер сообщения: ");
+        AddText(fglv::hChat, L"Р Р°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ: ");
         AddText(fglv::hChat, std::to_wstring(size_of_message).c_str());
         AddText(fglv::hChat, L"\n");
 
@@ -297,9 +344,9 @@ void ClientHandler(int number)
         if (recv(glv::Sockets[client_number], message, size_of_message, NULL) < 0)
         {
             ReleaseSemaphore(glv::hSemaphore, glv::current_users - 1, NULL);
-            Mistake(L"Ошибка получения сообщения строка 280");
+            Mistake(L"РћС€РёР±РєР° РїРѕР»СѓС‡РµРЅРёСЏ СЃРѕРѕР±С‰РµРЅРёСЏ СЃС‚СЂРѕРєР° 280");
         }
-
+        Logging(client_number, size_of_message, message, MESSAGE_GET);
         std::string str(message);
         std::wstring wstr = StrToWstr(str);
         wmessage = wstr.c_str();
@@ -312,10 +359,23 @@ void ClientHandler(int number)
     }
     glv::closed_client = client_number;
     glv::server_loaded = false;
+
     AddText(fglv::hChat, L"\n");
-    AddText(fglv::hChat, L"Клиент #");
+    AddText(fglv::hChat, L"РљР»РёРµРЅС‚ #");
     AddText(fglv::hChat, std::to_wstring(client_number).c_str());
-    AddText(fglv::hChat, L" отключился\n");
+    AddText(fglv::hChat, L" РѕС‚РєР»СЋС‡РёР»СЃСЏ\n");
+
+    glv::disconnected_clients.push_back(client_number);
+    if (glv::actual_clients[0] == client_number)
+    {
+        glv::actual_clients[0] = -1;
+    }
+    else
+    {
+        glv::actual_clients[1] = -1;
+    }
+    Logging(client_number, NULL, NULL, DISCONNECTING_FLAG);
+
     ReleaseSemaphore(glv::hSemaphore, 1, NULL);
 }
 
@@ -349,7 +409,7 @@ WNDCLASSEX InitializeWNDCLASSEX(HINSTANCE hInstance, HINSTANCE hPrevInstance, LP
 }
 
 /// <summary>
-/// Инициализация параматра MSG
+/// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїР°СЂР°РјР°С‚СЂР° MSG
 /// </summary>
 /// <returns>MSG</returns>
 MSG HandleMSG()
@@ -364,7 +424,7 @@ MSG HandleMSG()
 }
 
 /// <summary>
-/// Функция инициализации версии библиотеки Winsock
+/// Р¤СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РІРµСЂСЃРёРё Р±РёР±Р»РёРѕС‚РµРєРё Winsock
 /// </summary>
 void InitializeWSA()
 {
@@ -372,13 +432,13 @@ void InitializeWSA()
     WORD DLLVersion = MAKEWORD(2, 1);
     if (WSAStartup(DLLVersion, &wsaData) != 0)
     {
-        MessageBox(NULL, L"Ошибка инициализации библиотеки", L"Ошибка инициализации библиотеки", NULL);
+        MessageBox(NULL, L"РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё Р±РёР±Р»РёРѕС‚РµРєРё", L"РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё Р±РёР±Р»РёРѕС‚РµРєРё", NULL);
         exit(1);
     }
 }
 
 /// <summary>
-/// Функция инициализации семафора
+/// Р¤СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё СЃРµРјР°С„РѕСЂР°
 /// </summary>
 /// <returns>Semaphore</returns>
 HANDLE InitializeSemaphore()
@@ -386,22 +446,25 @@ HANDLE InitializeSemaphore()
     HANDLE semaphore = CreateSemaphore(NULL, 2, 2, L"semaphore");
     if (!semaphore)
     {
-        MessageBox(NULL, L"Ошибка инициализации Семафора", L"Ошибка инициализации Семафора", NULL);
+        MessageBox(NULL, L"РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РЎРµРјР°С„РѕСЂР°", L"РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РЎРµРјР°С„РѕСЂР°", NULL);
         exit(1);
     }
     return semaphore;
 }
 
 /// <summary>
-/// Функция добавления виджетов для окна
+/// Р¤СѓРЅРєС†РёСЏ РґРѕР±Р°РІР»РµРЅРёСЏ РІРёРґР¶РµС‚РѕРІ РґР»СЏ РѕРєРЅР°
 /// </summary>
 /// <param name="hWnd"></param>
 void MainWndAddWidgets(HWND hWnd)
 {
-    CreateWindow(L"static", L"Сервер", WS_VISIBLE | WS_CHILD | ES_CENTER, 5, 5, 720, 20, hWnd, NULL, NULL, NULL);
+    CreateWindow(L"static", L"РЎРµСЂРІРµСЂ", WS_VISIBLE | WS_CHILD | ES_CENTER, 5, 5, 720, 20, hWnd, NULL, NULL, NULL);
     fglv::hChat = CreateWindow(L"EDIT", NULL, WS_VISIBLE | WS_CHILD | ES_READONLY | WS_VSCROLL | ES_MULTILINE, 5, 35, 710, 220, hWnd, NULL, NULL, NULL);
 }
 
+/// <summary>
+/// РћР±СЂР°Р±Р°С‚С‹РІР°РµРј СЃРѕР±С‹С‚РёСЏ СЃРµСЂРІРµСЂР°; СЌС‚Рѕ РїСЂРѕРёСЃС…РѕРґРёС‚ РІ РѕС‚РґРµР»СЊРЅРѕРј РїРѕС‚РѕРєРµ
+/// </summary>
 void ProcessServer()
 {
     InitializeWSA();
@@ -426,7 +489,7 @@ void ProcessServer()
     {
         if (!glv::process_flag)
             break;
-        // записываем в вектор сокетов новые подключения
+        // Р·Р°РїРёСЃС‹РІР°РµРј РІ РІРµРєС‚РѕСЂ СЃРѕРєРµС‚РѕРІ РЅРѕРІС‹Рµ РїРѕРґРєР»СЋС‡РµРЅРёСЏ
         glv::Sockets.push_back(accept(sListen, (SOCKADDR*)&addr, &sizeofaddr));
         ++glv::current_users;
         AddText(fglv::hChat, L"####\n");
@@ -437,14 +500,31 @@ void ProcessServer()
 
         if (i < 2)
         {
-            // вносим в массив 
+            // РІРЅРѕСЃРёРј РІ РјР°СЃСЃРёРІ 
             glv::actual_clients[i] = i;
+            AddText(fglv::hChat, L"\n");
+            AddText(fglv::hChat, L"####");
+            AddText(fglv::hChat, L"\n");
+            AddText(fglv::hChat, L"glv::actual_clients[0] ");
+            AddText(fglv::hChat, std::to_wstring(glv::actual_clients[0]).c_str());
+            AddText(fglv::hChat, L" | with socket: ");
+            AddText(fglv::hChat, std::to_wstring(glv::Sockets[glv::actual_clients[0]]).c_str());
+            AddText(fglv::hChat, L"\n");
+            AddText(fglv::hChat, L"glv::actual_clients[1] ");
+            AddText(fglv::hChat, std::to_wstring(glv::actual_clients[1]).c_str());
+            AddText(fglv::hChat, L" | with socket: ");
+            AddText(fglv::hChat, std::to_wstring(glv::Sockets[glv::actual_clients[0]]).c_str());
+            AddText(fglv::hChat, L"\n");
+            AddText(fglv::hChat, L"####");
+            AddText(fglv::hChat, L"\n");
         }
         else
         {
-            // перезаписываем подключения в зависимости от того кто подключился и кто отключился
+            // РїРµСЂРµР·Р°РїРёСЃС‹РІР°РµРј РїРѕРґРєР»СЋС‡РµРЅРёСЏ РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ С‚РѕРіРѕ РєС‚Рѕ РїРѕРґРєР»СЋС‡РёР»СЃСЏ Рё РєС‚Рѕ РѕС‚РєР»СЋС‡РёР»СЃСЏ
             update_users(i);
-            AddText(fglv::hChat, L"####\n");
+            AddText(fglv::hChat, L"\n");
+            AddText(fglv::hChat, L"####");
+            AddText(fglv::hChat, L"\n");
             AddText(fglv::hChat, L"glv::actual_clients[0] ");
             AddText(fglv::hChat, std::to_wstring(glv::actual_clients[0]).c_str());
             AddText(fglv::hChat, L" | with socket: ");
@@ -459,15 +539,15 @@ void ProcessServer()
             AddText(fglv::hChat, L"\n");
         }
         ++i;
-        if (i > 1)
+        if (glv::actual_clients[0] != -1 && glv::actual_clients[1] != -1)
         {
-            // если на сервере больше 2 человек, то ставим флаг приостановки обработки новых пользователей
+            // РµСЃР»Рё РЅР° СЃРµСЂРІРµСЂРµ Р±РѕР»СЊС€Рµ 2 С‡РµР»РѕРІРµРє, С‚Рѕ СЃС‚Р°РІРёРј С„Р»Р°Рі РїСЂРёРѕСЃС‚Р°РЅРѕРІРєРё РѕР±СЂР°Р±РѕС‚РєРё РЅРѕРІС‹С… РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
             glv::server_loaded = true;
         }
         CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)ClientHandler, (LPVOID)i, NULL, NULL);
         while (glv::server_loaded)
         {
-            // пока стои флаг ожидаем
+            // РїРѕРєР° СЃС‚РѕРё С„Р»Р°Рі РѕР¶РёРґР°РµРј
             Sleep(1 * SECOND);
         }
         Sleep(30 * MILLISECOND);
@@ -476,7 +556,7 @@ void ProcessServer()
     {
         closesocket(glv::Sockets[i]);
     }
-    // закрываем семафор
+    // Р·Р°РєСЂС‹РІР°РµРј СЃРµРјР°С„РѕСЂ
     CloseHandle(hSemaphore);
     WSACleanup();
     CleanHistoryMemory();
@@ -494,14 +574,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     HWND hWnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, L"Server", szTitle, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 740, 350, NULL, NULL, hInstance, NULL);
     ShowWindow(hWnd, nCmdShow);
     UpdateWindow(hWnd);
-
+    glv::out.open("Logger.txt");
     CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)ProcessServer, NULL, NULL, NULL);
     MSG msg = HandleMSG();
     return (int)msg.wParam;
 }
 
 /// <summary>
-/// Функция обработки событий оконного приложения
+/// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё СЃРѕР±С‹С‚РёР№ РѕРєРѕРЅРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ
 /// </summary>
 /// <param name="hWnd"></param>
 /// <param name="message"></param>
@@ -521,6 +601,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     case WM_DESTROY:
+        glv::out.close();
         PostQuitMessage(0);
         break;
     default:
