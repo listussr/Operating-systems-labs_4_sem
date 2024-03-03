@@ -14,7 +14,7 @@ namespace constants
 }
 
 /// <summary>
-/// ���������� ������� ��������� int �������� �� �������, � ������� ��������� ���������
+/// костыльная функция получения int значения из консоли, к которой обращаетс ассемблер
 /// </summary>
 /// <param name="value"></param>
 void scanint(int &value)
@@ -33,7 +33,7 @@ void scanint(int &value)
 }
 
 /// <summary>
-/// ���������� ������� ������ ������� char, � ������� ���������� ���������
+/// костыльная функция вывода массива char, к которой обращается ассемблер
 /// </summary>
 /// <param name="message"></param>
 void print_char(const char* message)
@@ -42,7 +42,7 @@ void print_char(const char* message)
 }
 
 /// <summary>
-/// ���������� ������� ������ ������� int, � ������� ���������� ���������
+/// костыльная функция вывода массива int, к которой обращается ассемблер
 /// </summary>
 /// <param name="message"></param>
 void print_int(int& message)
@@ -51,17 +51,19 @@ void print_int(int& message)
 }
 
 /// <summary>
-/// ������� ������ ������� ����������
+/// Функция показа вводной информации
 /// </summary>
 void show_info()
 {
 	__asm
 	{
+		; выводим сообщение об общей работе программы
 		mov eax, constants::info_message
 		push eax
 		call print_char
 		add esp, 4 * 1
 
+		; выводим сообщение о некорректности ввода 0
 		mov eax, constants::extra_info
 		push eax
 		call print_char
@@ -70,7 +72,7 @@ void show_info()
 }
 
 /// <summary>
-/// ������� ��������� ������� �������
+/// функция получения размера массива
 /// </summary>
 /// <returns>size -> int</returns>
 int get_int()
@@ -78,15 +80,16 @@ int get_int()
 	int value;
 	__asm
 	{
-		; ������� ��������� � �����
+		; выводим сообщение о вводе
 		mov eax, constants::info_message_int
 		push eax
 		call print_char
 		add esp, 4 * 1
-		; ������ ���� int����� ��������
+
 		mov eax, 1
 		jmp Enter_value
 
+		; цикл ввода значения
 		Enter_value:
 			lea eax, value
 			push eax
@@ -97,6 +100,7 @@ int get_int()
 			jle incorrect_input
 			jmp ex
 
+		; обработка некорректных данных
 		incorrect_input:
 			mov ebx, constants::incorrect_input
 			push ebx
@@ -104,6 +108,7 @@ int get_int()
 			add esp, 4 * 1
 			jmp Enter_value
 
+		; очистка регистров и выход из вставки
 		ex:
 			xor eax, eax
 			xor ebx, ebx
@@ -112,42 +117,45 @@ int get_int()
 }
 
 /// <summary>
-/// ������� ��������� ������� �����, � ������� ����� ������ ������� � ��������
+/// Функция получения массива чисел, в котором будем искать минимум и максимум
 /// </summary>
 /// <param name="value"></param>
 /// <returns>array -> int*</returns>
 int* get_array(int value)
 {
 	int size_ = value;
-	int ebx_res;
-	int ecx_res;
+	int ebx_res; // костыльная переменная-буфер для ebx, т.к. call scanint ломает значения регистров
+	int ecx_res; // костыльная переменная-буфер для ecx, т.к. call scanint ломает значения регистров
 	int* arr = new int[value];
 	int val;
 	__asm
 	{
-		; ������� ��������� � �����
+		; выводим сообщение о вводе
 		mov eax, constants::info_message_arr
 		push eax
 		call print_char
 		add esp, 4 * 1
 
-		; ������ �������� �������
+		; вводим элементы массива
 		mov ecx, size_
 		mov esi, arr
 		mov ebx, 0
 		jmp For
 
+		; основной цикл ввода
 		For:
 			cmp ecx, 0
 			jz Exit_
 			jmp Enter_val
 			
+		; ввод элемента
 		Enter_val:
 			lea eax, val
 			mov ecx_res, ecx
 			push eax
 			call scanint
 			add esp, 4 * 1
+			; проверка на корресктность ввода
 			cmp val, 0
 			jz Incorrect_input
 			mov edx, val
@@ -160,6 +168,7 @@ int* get_array(int value)
 			dec ecx
 			jmp For
 			
+		; метка обработки некорректных данных
 		Incorrect_input:
 			mov ebx_res, ebx
 			mov ebx, constants::incorrect_input
@@ -169,7 +178,8 @@ int* get_array(int value)
 			mov ebx, ebx_res
 			mov ecx, ecx_res
 			jmp Enter_val
-			
+		
+		; метка выхода из вставки и очистки регистров
 		Exit_:
 			xor eax, eax
 			xor ebx, ebx
@@ -181,7 +191,7 @@ int* get_array(int value)
 }
 
 /// <summary>
-/// ������� ���������� ������������ � ������������� �������� �������
+/// Функция нахождения минимального и максимального значений функции
 /// </summary>
 /// <param name="Array_of_numbers"></param>
 /// <param name="Length_of_array"></param>
@@ -195,10 +205,11 @@ int* find_extremums(int* Array_of_numbers, int Length_of_array)
 		mov ecx, 1
 		mov esi, Array_of_numbers
 		mov ebx, [esi]
-		mov min, ebx
-		mov max, ebx
+		mov min, ebx ; присваиваем минимальному значению первый элемент массива
+		mov max, ebx ; присваиваем максимальному значению первый элемент массива
 		jmp For
 
+		; цикл прохода по всем элементам массива и одновременного поиска минимального и максимального значений
 		For:
 			cmp ecx, Length_of_array
 			je Enter_res
@@ -212,16 +223,19 @@ int* find_extremums(int* Array_of_numbers, int Length_of_array)
 			inc ecx
 			jmp For
 
+		; если значение больше прошлого максимального значения
 		More:
 			mov max, eax
 			inc ecx
 			jmp For
 
+		; если значение меньше прошлого минимального значения
 		Less:
 			mov min, eax
 			inc ecx
 			jmp For
-
+		
+		; вводим в массив res минимальное и максимальное значение
 		Enter_res:
 			mov esi, res
 			lea eax, [esi]
@@ -232,6 +246,7 @@ int* find_extremums(int* Array_of_numbers, int Length_of_array)
 			mov [eax], ebx
 			jmp Exit_asm
 
+		; чистим регистры
 		Exit_asm:
 			xor eax, eax
 			xor bl, bl
@@ -243,29 +258,33 @@ int* find_extremums(int* Array_of_numbers, int Length_of_array)
 }
 
 /// <summary>
-/// ������� ������ � ������� ����������
+/// Функция вывода в консоль результата
 /// </summary>
 /// <param name="*res"></param>
 void show_result(int* res)
 {
 	__asm
 	{
+		; выводим в консоль сообщение о минимальном значении
 		mov eax, constants::minimal_value
 		push eax
 		call print_char
 		add esp, 4 * 1
 
+		; выводим в консоль минимальное значение
 		lea esi, res
 		mov eax, [esi]
 		push eax
 		call print_int
 		add esp, 4 * 1
 
+		; выводим в консоль сообщение о максимальном значении
 		mov eax, constants::maximal_value
 		push eax
 		call print_char
 		add esp, 4 * 1
 
+		; выводим в консоль максимальное значение
 		add res, 4
 		lea esi, res
 		mov eax, [esi]
@@ -276,7 +295,7 @@ void show_result(int* res)
 }
 
 /// <summary>
-/// ������� �������� ������������ ���������
+/// Функция проверки зацикливания программы
 /// </summary>
 /// <returns>flag -> bool</returns>
 bool check_continue()
