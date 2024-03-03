@@ -5,6 +5,7 @@
 #include <string.h>
 #include <tchar.h>
 #include <string>
+#include <ctime>
 #pragma warning(disable: 4996)
 
 
@@ -13,12 +14,12 @@
 #define SECOND 1000
 #define ON_BUTTON_CLICKED 1
 
-static TCHAR szTitle[] = _T("Чат");
+static TCHAR szTitle[] = _T("Р§Р°С‚");
 
 HINSTANCE hInst;
 
 /// <summary>
-/// Функция перевода ASCII строки в расширенную строку
+/// Р¤СѓРЅРєС†РёСЏ РїРµСЂРµРІРѕРґР° ASCII СЃС‚СЂРѕРєРё РІ СЂР°СЃС€РёСЂРµРЅРЅСѓСЋ СЃС‚СЂРѕРєСѓ
 /// </summary>
 /// <param name="str"></param>
 /// <returns>str in UTF_8</returns>
@@ -33,7 +34,7 @@ std::wstring StrToWstr(std::string str)
 }
 
 /// <summary>
-/// Функция перевода расширенной строки в ASCII строку
+/// Р¤СѓРЅРєС†РёСЏ РїРµСЂРµРІРѕРґР° СЂР°СЃС€РёСЂРµРЅРЅРѕР№ СЃС‚СЂРѕРєРё РІ ASCII СЃС‚СЂРѕРєСѓ
 /// </summary>
 /// <param name="wstr"></param>
 /// <returns>wstr in ASCII</returns>
@@ -50,33 +51,33 @@ std::string WstrToStr(std::wstring wstr)
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 /// <summary>
-/// глобальные переменные дескрипторов winapi
+/// РіР»РѕР±Р°Р»СЊРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ РґРµСЃРєСЂРёРїС‚РѕСЂРѕРІ winapi
 /// </summary>
 namespace fglv
 {
-    static HWND hChat;  // дескриптор поля ввода сообщения
-    static HWND hEntry; // дескриптор поля отображения сообщений
-    static HWND hBtn;   // дескриптор кнопки отправки сообщения
+    static HWND hChat;  // РґРµСЃРєСЂРёРїС‚РѕСЂ РїРѕР»СЏ РІРІРѕРґР° СЃРѕРѕР±С‰РµРЅРёСЏ
+    static HWND hEntry; // РґРµСЃРєСЂРёРїС‚РѕСЂ РїРѕР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ СЃРѕРѕР±С‰РµРЅРёР№
+    static HWND hBtn;   // РґРµСЃРєСЂРёРїС‚РѕСЂ РєРЅРѕРїРєРё РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёСЏ
 }
 
 /// <summary>
-/// глобальные переменные для работы с чатом
+/// РіР»РѕР±Р°Р»СЊРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ РґР»СЏ СЂР°Р±РѕС‚С‹ СЃ С‡Р°С‚РѕРј
 /// </summary>
 namespace glv
 {
     SOCKET Connection;
-    // по умолчанию true
+    // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ true
     bool connected_flag = true;
-    // по умолчанию false
+    // РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ false
     bool written = false;
     wchar_t* wmessage;
 }
 
 /// <summary>
-/// Функция добавления сообщения на экран
+/// Р¤СѓРЅРєС†РёСЏ РґРѕР±Р°РІР»РµРЅРёСЏ СЃРѕРѕР±С‰РµРЅРёСЏ РЅР° СЌРєСЂР°РЅ
 /// </summary>
-/// <param name="eWnd">[Дескриптор чата]</param>
-/// <param name="text">[Передаваемый текст]</param>
+/// <param name="eWnd">[Р”РµСЃРєСЂРёРїС‚РѕСЂ С‡Р°С‚Р°]</param>
+/// <param name="text">[РџРµСЂРµРґР°РІР°РµРјС‹Р№ С‚РµРєСЃС‚]</param>
 void AddText(HWND eWnd, const TCHAR* text)
 {
     SendMessage(eWnd, EM_SETSEL, -1, -1);
@@ -84,7 +85,7 @@ void AddText(HWND eWnd, const TCHAR* text)
 }
 
 /// <summary>
-/// Функция обработки написанного в поле ввода текста
+/// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё РЅР°РїРёСЃР°РЅРЅРѕРіРѕ РІ РїРѕР»Рµ РІРІРѕРґР° С‚РµРєСЃС‚Р°
 /// </summary>
 void ProcessEntry()
 {
@@ -94,7 +95,7 @@ void ProcessEntry()
     SendMessage(fglv::hEntry, WM_SETTEXT, WPARAM(0), WPARAM(L""));
     if (length > 0)
     {
-        AddText(fglv::hChat, L"Вы: ");
+        AddText(fglv::hChat, L"Р’С‹: ");
         AddText(fglv::hChat, glv::wmessage);
         AddText(fglv::hChat, L"\n");
         glv::written = true;
@@ -102,7 +103,7 @@ void ProcessEntry()
 }
 
 /// <summary>
-/// Отключаемся от сервера и закрываем программу
+/// РћС‚РєР»СЋС‡Р°РµРјСЃСЏ РѕС‚ СЃРµСЂРІРµСЂР° Рё Р·Р°РєСЂС‹РІР°РµРј РїСЂРѕРіСЂР°РјРјСѓ
 /// </summary>
 void Leave()
 {
@@ -112,39 +113,39 @@ void Leave()
 }
 
 /// <summary>
-/// Функция обработки принудительного закрытия окна клиента через крестик
+/// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕРіРѕ Р·Р°РєСЂС‹С‚РёСЏ РѕРєРЅР° РєР»РёРµРЅС‚Р° С‡РµСЂРµР· РєСЂРµСЃС‚РёРє
 /// </summary>
 void CloseClient()
 {
     const char message[] = {"--leave"};
     int size_of_message = 7;
-    // принудительно отправляем на сервер сообщение о выходе
+    // РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ РѕС‚РїСЂР°РІР»СЏРµРј РЅР° СЃРµСЂРІРµСЂ СЃРѕРѕР±С‰РµРЅРёРµ Рѕ РІС‹С…РѕРґРµ
     send(glv::Connection, (char*)&size_of_message, INT_SIZE, NULL);
-    //AddText(fglv::hChat, L"Размер отправлен");
+    //AddText(fglv::hChat, L"Р Р°Р·РјРµСЂ РѕС‚РїСЂР°РІР»РµРЅ");
     //AddText(fglv::hChat, L"\n");
-    Sleep(2 * SECOND); // костыль
+    Sleep(2 * SECOND); // РєРѕСЃС‚С‹Р»СЊ
     send(glv::Connection, message, size_of_message, NULL);
-    //AddText(fglv::hChat, L"Сообщение отправлено");
+    //AddText(fglv::hChat, L"РЎРѕРѕР±С‰РµРЅРёРµ РѕС‚РїСЂР°РІР»РµРЅРѕ");
     //AddText(fglv::hChat, L"\n");
-    Sleep(2 * SECOND); // костыль
-    // выходим
+    Sleep(2 * SECOND); // РєРѕСЃС‚С‹Р»СЊ
+    // РІС‹С…РѕРґРёРј
     Leave();
 }
 
 /// <summary>
-/// Функция обработки ошибок
+/// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё РѕС€РёР±РѕРє
 /// </summary>
 /// <param name="message"></param>
 void Mistake(const wchar_t* message)
 {
-    MessageBox(NULL, L"Ошибка", message, NULL);
+    MessageBox(NULL, L"РћС€РёР±РєР°", message, NULL);
     closesocket(glv::Connection);
     WSACleanup();
     exit(1);
 }
 
 /// <summary>
-/// Функция получения истории чата
+/// Р¤СѓРЅРєС†РёСЏ РїРѕР»СѓС‡РµРЅРёСЏ РёСЃС‚РѕСЂРёРё С‡Р°С‚Р°
 /// </summary>
 void GetHistory()
 {
@@ -153,35 +154,35 @@ void GetHistory()
     char* message, * name;
     if (recv(glv::Connection, (char*)&history_size, ULL_SIZE, NULL) < 0)
     {
-        Mistake(L"Получение размера истории");
+        Mistake(L"РџРѕР»СѓС‡РµРЅРёРµ СЂР°Р·РјРµСЂР° РёСЃС‚РѕСЂРёРё");
     }
     for (size_t i = 0; i < history_size; ++i)
     {
         if (recv(glv::Connection, (char*)&name_size, INT_SIZE, NULL) < 0)
         {
-            Mistake(L"Получение размера имени из истории");
+            Mistake(L"РџРѕР»СѓС‡РµРЅРёРµ СЂР°Р·РјРµСЂР° РёРјРµРЅРё РёР· РёСЃС‚РѕСЂРёРё");
         }
         name = new char[name_size + 1];
         name[name_size] = '\0';
         if (recv(glv::Connection, name, name_size, NULL) < 0)
         {
-            Mistake(L"Получение имени");
+            Mistake(L"РџРѕР»СѓС‡РµРЅРёРµ РёРјРµРЅРё");
         }
         std::string namestr(name);
         std::wstring wnamestr = StrToWstr(namestr);
         const wchar_t* wname = wnamestr.c_str();
-        // получаем размер сообщения
+        // РїРѕР»СѓС‡Р°РµРј СЂР°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ
         if (recv(glv::Connection, (char*)&message_size, INT_SIZE, NULL) < 0)
         {
-            Mistake(L"Получение размера сообщения");
+            Mistake(L"РџРѕР»СѓС‡РµРЅРёРµ СЂР°Р·РјРµСЂР° СЃРѕРѕР±С‰РµРЅРёСЏ");
         }
         message = new char[message_size + 2];
         message[message_size] = '\n';
         message[message_size + 1] = '\0';
-        // получаем само сообщение
+        // РїРѕР»СѓС‡Р°РµРј СЃР°РјРѕ СЃРѕРѕР±С‰РµРЅРёРµ
         if (recv(glv::Connection, message, message_size, NULL) < 0)
         {
-            Mistake(L"Получение сообщения");
+            Mistake(L"РџРѕР»СѓС‡РµРЅРёРµ СЃРѕРѕР±С‰РµРЅРёСЏ");
         }
         std::string str(message);
         std::wstring wstr = StrToWstr(str);
@@ -189,14 +190,14 @@ void GetHistory()
         AddText(fglv::hChat, wname);
         AddText(fglv::hChat, L" ");
         AddText(fglv::hChat, wmessage);
-        // чистим память
+        // С‡РёСЃС‚РёРј РїР°РјСЏС‚СЊ
         delete[] message;
         delete[] name;
     }
 }
 
 /// <summary>
-/// Функция принятия сообщения от пользователя на другом конце чата
+/// Р¤СѓРЅРєС†РёСЏ РїСЂРёРЅСЏС‚РёСЏ СЃРѕРѕР±С‰РµРЅРёСЏ РѕС‚ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅР° РґСЂСѓРіРѕРј РєРѕРЅС†Рµ С‡Р°С‚Р°
 /// </summary>
 void GetChatMessage()
 {
@@ -208,52 +209,56 @@ void GetChatMessage()
         char* message;
         if (recv(glv::Connection, (char*)&client_number, INT_SIZE, NULL) < 0)
         {
-            Mistake(L"Получение номера пользователя");
+            Mistake(L"РџРѕР»СѓС‡РµРЅРёРµ РЅРѕРјРµСЂР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ");
         }
 
-        AddText(fglv::hChat, L"Номер пользователя: ");
+        /*
+        AddText(fglv::hChat, L"РќРѕРјРµСЂ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ: ");
         AddText(fglv::hChat, std::to_wstring(client_number).c_str());
         AddText(fglv::hChat, L"\n");
+        */
 
-        // получаем размер сообщения
+        // РїРѕР»СѓС‡Р°РµРј СЂР°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ
         if (recv(glv::Connection, (char*)&message_size, INT_SIZE, NULL) < 0)
         {
-            Mistake(L"Получение размера сообщения");
+            Mistake(L"РџРѕР»СѓС‡РµРЅРёРµ СЂР°Р·РјРµСЂР° СЃРѕРѕР±С‰РµРЅРёСЏ");
         }
-
-        AddText(fglv::hChat, L"Размер сообщения: ");
+        
+        /*
+        AddText(fglv::hChat, L"Р Р°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ: ");
         AddText(fglv::hChat, std::to_wstring(message_size).c_str());
         AddText(fglv::hChat, L"\n");
+        */
 
         message = new char[message_size + 2];
         message[message_size] = '\n';
         message[message_size + 1] = '\0';
 
-        // получаем само сообщение
+        // РїРѕР»СѓС‡Р°РµРј СЃР°РјРѕ СЃРѕРѕР±С‰РµРЅРёРµ
         if (recv(glv::Connection, message, message_size, NULL) < 0)
         {
-            Mistake(L"Получение сообщения");
+            Mistake(L"РџРѕР»СѓС‡РµРЅРёРµ СЃРѕРѕР±С‰РµРЅРёСЏ");
         }
 
         std::string str(message);
         std::wstring wstr = StrToWstr(str);
         wmessage = wstr.c_str();
 
-        // выводим сообщение в чат
-        AddText(fglv::hChat, L"Пользователь #");
+        // РІС‹РІРѕРґРёРј СЃРѕРѕР±С‰РµРЅРёРµ РІ С‡Р°С‚
+        AddText(fglv::hChat, L"РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ #");
         AddText(fglv::hChat, std::to_wstring(client_number).c_str());
         AddText(fglv::hChat, L": ");
-        AddText(fglv::hChat, L"\n");
-        AddText(fglv::hChat, L"Message: ");
+        //AddText(fglv::hChat, L"\n");
+        //AddText(fglv::hChat, L"Message: ");
         AddText(fglv::hChat, wstr.c_str());
 
-        // чистим память
+        // С‡РёСЃС‚РёРј РїР°РјСЏС‚СЊ
         delete[] message;
     }
 }
 
 /// <summary>
-/// Функция отправки сообщения другому пользователю
+/// Р¤СѓРЅРєС†РёСЏ РѕС‚РїСЂР°РІРєРё СЃРѕРѕР±С‰РµРЅРёСЏ РґСЂСѓРіРѕРјСѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ
 /// </summary>
 void SendChatMessage()
 {
@@ -273,23 +278,24 @@ void SendChatMessage()
         const char* message = str.c_str();
         int size_of_message = str.size();
 
-        AddText(fglv::hChat, L"Размер сообщения: ");
-        AddText(fglv::hChat, std::to_wstring(size_of_message).c_str());
-        AddText(fglv::hChat, L"\n");
+        //AddText(fglv::hChat, L"Р Р°Р·РјРµСЂ СЃРѕРѕР±С‰РµРЅРёСЏ: ");
+        //AddText(fglv::hChat, std::to_wstring(size_of_message).c_str());
+        //AddText(fglv::hChat, L"\n");
+
         send(glv::Connection, (char*)&size_of_message, INT_SIZE, NULL);
         if (!glv::connected_flag)
         {
-            AddText(fglv::hChat, L"Размер отправлен");
+            AddText(fglv::hChat, L"Р Р°Р·РјРµСЂ РѕС‚РїСЂР°РІР»РµРЅ");
             AddText(fglv::hChat, L"\n");
             Sleep(2 * SECOND);
         }
         send(glv::Connection, message, size_of_message, NULL);
         if (!glv::connected_flag)
         {
-            AddText(fglv::hChat, L"Сообщение отправлено");
+            AddText(fglv::hChat, L"РЎРѕРѕР±С‰РµРЅРёРµ РѕС‚РїСЂР°РІР»РµРЅРѕ");
             AddText(fglv::hChat, L"\n");
             Sleep(2 * SECOND);
-            MessageBox(NULL, L"Программа закроется через 5 секунд", L"Закрытие программы", MB_OK);
+            //MessageBox(NULL, L"РџСЂРѕРіСЂР°РјРјР° Р·Р°РєСЂРѕРµС‚СЃСЏ С‡РµСЂРµР· 5 СЃРµРєСѓРЅРґ", L"Р—Р°РєСЂС‹С‚РёРµ РїСЂРѕРіСЂР°РјРјС‹", MB_OK);
         }
         glv::written = false;
     }
@@ -297,7 +303,7 @@ void SendChatMessage()
 }
 
 /// <summary>
-/// Функция управления работой чата
+/// Р¤СѓРЅРєС†РёСЏ СѓРїСЂР°РІР»РµРЅРёСЏ СЂР°Р±РѕС‚РѕР№ С‡Р°С‚Р°
 /// </summary>
 void HandleChat()
 {
@@ -307,15 +313,28 @@ void HandleChat()
 }
 
 /// <summary>
-/// Функция создания виджетов
+/// Р¤СѓРЅРєС†РёСЏ СЃРѕР·РґР°РЅРёСЏ РІРёРґР¶РµС‚РѕРІ
 /// </summary>
 /// <param name="hWnd"></param>
 void CreateWndWidgets(HWND hWnd)
 {
-    CreateWindow(L"static", L"Чат", WS_VISIBLE | WS_CHILD | ES_CENTER, 5, 5, 710, 20, hWnd, NULL, NULL, NULL);
+    CreateWindow(L"static", L"Р§Р°С‚", WS_VISIBLE | WS_CHILD | ES_CENTER, 5, 5, 710, 20, hWnd, NULL, NULL, NULL);
     fglv::hChat = CreateWindow(L"EDIT", NULL, WS_VISIBLE | WS_CHILD | ES_READONLY | WS_VSCROLL | ES_MULTILINE, 5, 35, 710, 220, hWnd, NULL, NULL, NULL);
-    fglv::hEntry = CreateWindow(L"EDIT", L"Привет", WS_VISIBLE | WS_CHILD | WS_BORDER, 5, 270, 600, 20, hWnd, NULL, NULL, NULL);
-    fglv::hBtn = CreateWindow(L"button", L"Отправить", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 610, 270, 90, 20, hWnd, (HMENU)ON_BUTTON_CLICKED, NULL, NULL);
+    fglv::hEntry = CreateWindow(L"EDIT", L"РџСЂРёРІРµС‚", WS_VISIBLE | WS_CHILD | WS_BORDER, 5, 270, 600, 20, hWnd, NULL, NULL, NULL);
+    fglv::hBtn = CreateWindow(L"button", L"РћС‚РїСЂР°РІРёС‚СЊ", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, 610, 270, 90, 20, hWnd, (HMENU)ON_BUTTON_CLICKED, NULL, NULL);
+}
+
+/// <summary>
+/// Р¤СѓРЅРєС†РёСЏ СѓСЃС‚Р°РЅРѕРІРєРё С†РІРµС‚Р° РѕРєРЅР° РІ РїСЂРёР»РѕР¶РµРЅРёРё
+/// </summary>
+/// <returns>color id -> int</returns>
+int GetColor()
+{
+    srand(time(NULL));
+    int left_border = 0, right_border = 7;
+    int colorId[] = { 3, 6, 9, 12, 18, 20, 23, 24 };
+    int id = rand() % right_border;
+    return colorId[id];
 }
 
 /// <summary>
@@ -338,7 +357,7 @@ WNDCLASSEX InitialiseWNDCLASSEX(HINSTANCE hInstance, HINSTANCE hPrevInstance, LP
     wcex.hInstance = hInstance;
     wcex.hIcon = LoadIcon(wcex.hInstance, IDI_APPLICATION);
     wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + GetColor());
     wcex.lpszMenuName = NULL;
     wcex.lpszClassName = L"Client";
     wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
@@ -346,7 +365,7 @@ WNDCLASSEX InitialiseWNDCLASSEX(HINSTANCE hInstance, HINSTANCE hPrevInstance, LP
 }
 
 /// <summary>
-/// Инициализация параматра MSG
+/// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РїР°СЂР°РјР°С‚СЂР° MSG
 /// </summary>
 /// <returns></returns>
 MSG HandleMSG()
@@ -361,7 +380,7 @@ MSG HandleMSG()
 }
 
 /// <summary>
-/// Функция инициализации версии библиотеки Winsock
+/// Р¤СѓРЅРєС†РёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё РІРµСЂСЃРёРё Р±РёР±Р»РёРѕС‚РµРєРё Winsock
 /// </summary>
 void InitialiseWSA()
 {
@@ -369,7 +388,7 @@ void InitialiseWSA()
     WORD DLLVersion = MAKEWORD(2, 1);
     if (WSAStartup(DLLVersion, &wsaData) != 0)
     {
-        MessageBox(NULL, L"Ошибка инициализации библиотеки", L"Ошибка инициализации библиотеки", NULL);
+        MessageBox(NULL, L"РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё Р±РёР±Р»РёРѕС‚РµРєРё", L"РћС€РёР±РєР° РёРЅРёС†РёР°Р»РёР·Р°С†РёРё Р±РёР±Р»РёРѕС‚РµРєРё", NULL);
         exit(1);
     }
 }
@@ -400,7 +419,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     glv::Connection = socket(AF_INET, SOCK_STREAM, NULL);
     if (connect(glv::Connection, (SOCKADDR*)&addr, sizeof(addr)))
     {
-        Mistake(L"Ошибка подключения к серверу!");
+        Mistake(L"РћС€РёР±РєР° РїРѕРґРєР»СЋС‡РµРЅРёСЏ Рє СЃРµСЂРІРµСЂСѓ!");
     }
     CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)HandleChat, NULL, NULL, NULL);
     MSG msg = HandleMSG();
@@ -408,7 +427,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 /// <summary>
-/// Функция обработки событий оконного приложения
+/// Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°Р±РѕС‚РєРё СЃРѕР±С‹С‚РёР№ РѕРєРѕРЅРЅРѕРіРѕ РїСЂРёР»РѕР¶РµРЅРёСЏ
 /// </summary>
 /// <param name="hWnd"></param>
 /// <param name="message"></param>
