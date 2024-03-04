@@ -1,0 +1,5 @@
+﻿  Server.cpp
+C:\University\kurs_2\semestr_2\systems\os_laba_6_extra\Server\Server\Server.cpp(80,15): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+C:\University\kurs_2\semestr_2\systems\os_laba_6_extra\Server\Server\Server.cpp(314,9): warning C4101: hdc: неиспользованная локальная переменная
+C:\University\kurs_2\semestr_2\systems\os_laba_6_extra\Server\Server\Server.cpp(313,17): warning C4101: ps: неиспользованная локальная переменная
+  Server.vcxproj -> C:\University\kurs_2\semestr_2\systems\os_laba_6_extra\Server\x64\Debug\Server.exe

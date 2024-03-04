@@ -1,0 +1,6 @@
+﻿  Client.cpp
+C:\University\kurs_2\semestr_2\systems\os_laba_6_extra\Client\Client\Client.cpp(55,15): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+C:\University\kurs_2\semestr_2\systems\os_laba_6_extra\Client\Client\Client.cpp(75,61): warning C4312: приведение типов: преобразование из "int" в "HBRUSH" большего размера
+C:\University\kurs_2\semestr_2\systems\os_laba_6_extra\Client\Client\Client.cpp(204,9): warning C4101: hdc: неиспользованная локальная переменная
+C:\University\kurs_2\semestr_2\systems\os_laba_6_extra\Client\Client\Client.cpp(203,17): warning C4101: ps: неиспользованная локальная переменная
+  Client.vcxproj -> C:\University\kurs_2\semestr_2\systems\os_laba_6_extra\Client\x64\Debug\Client.exe
